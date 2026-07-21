@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS `remark_formats` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `title` varchar(150) NOT NULL,
+  `subtitle` varchar(200) NOT NULL DEFAULT '',
+  `remark_content` text NOT NULL,
+  `title_color` varchar(7) NOT NULL DEFAULT '#212529',
+  `subtitle_color` varchar(7) NOT NULL DEFAULT '#6c757d',
+  `status` tinyint(1) NOT NULL DEFAULT 1,
+  `created_by` int(11) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_by` int(11) DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_by` int(11) DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_remark_formats_user_status` (`created_by`, `status`),
+  KEY `idx_remark_formats_updated_at` (`updated_at`),
+  KEY `idx_remark_formats_title` (`title`),
+  KEY `idx_remark_formats_subtitle` (`subtitle`),
+  KEY `idx_remark_formats_title_color` (`title_color`),
+  KEY `idx_remark_formats_subtitle_color` (`subtitle_color`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;

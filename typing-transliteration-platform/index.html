@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AksharLab - Typing and Transliteration</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Typing and transliteration platform</p>
+        <h1>AksharLab</h1>
+      </div>
+      <!-- Transliteration Module: disabled for now.
+      Uncomment this navigation when the converter panel below is re-enabled.
+      <nav class="mode-switch" aria-label="Application mode">
+        <button class="mode-btn active" type="button" data-mode="converter">Transliteration</button>
+        <button class="mode-btn" type="button" data-mode="practice">Typing Practice</button>
+      </nav>
+      -->
+    </header>
+
+    <!-- Transliteration Module: disabled for now.
+    The full converter UI is preserved here for easy reactivation.
+    Uncomment this section and the matching JavaScript block in app.js to restore it.
+    <section class="panel active" id="converterPanel" aria-labelledby="converterTitle">
+      <div class="section-head">
+        <div>
+          <h2 id="converterTitle">Real-time text conversion</h2>
+          <p>Convert between Devanagari Hindi and readable English transliteration while typing.</p>
+        </div>
+        <div class="toolbar compact">
+          <button class="tool-btn active" type="button" data-direction="hi-en">Hindi to English</button>
+          <button class="tool-btn" type="button" data-direction="en-hi">English to Hindi</button>
+        </div>
+      </div>
+
+      <div class="converter-grid">
+        <label class="field-block">
+          <span id="sourceLabel">Hindi input</span>
+          <textarea id="sourceText" rows="12" spellcheck="false" placeholder="यहां हिंदी लिखें..."></textarea>
+        </label>
+
+        <label class="field-block">
+          <span id="outputLabel">English output</span>
+          <textarea id="outputText" rows="12" readonly placeholder="Conversion appears here"></textarea>
+        </label>
+      </div>
+
+      <div class="actions">
+        <button class="primary-btn" type="button" id="swapBtn">Swap Direction</button>
+        <button class="secondary-btn" type="button" id="copyBtn">Copy Output</button>
+        <button class="ghost-btn" type="button" id="clearConverterBtn">Clear</button>
+        <span class="status-line" id="copyStatus" role="status" aria-live="polite"></span>
+      </div>
+    </section>
+    -->
+
+    <!-- Typing Practice Module -->
+    <section class="panel active" id="practicePanel" aria-labelledby="practiceTitle">
+      <div class="section-head">
+        <div>
+          <h2 id="practiceTitle">Typing practice</h2>
+          <p>Practice English or Hindi typing with live WPM, accuracy, mistakes, and saved results.</p>
+        </div>
+        <div class="practice-controls">
+          <label>
+            <span>Language</span>
+            <select id="practiceLanguage">
+              <option value="english">English</option>
+              <option value="hindi">Hindi</option>
+            </select>
+          </label>
+          <label>
+            <span>Duration</span>
+            <select id="durationSelect">
+              <option value="60">1 min</option>
+              <option value="120">2 min</option>
+              <option value="300">5 min</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="stats-row" aria-label="Typing test statistics">
+        <div class="stat-card">
+          <span>Time</span>
+          <strong id="timeLeft">01:00</strong>
+        </div>
+        <div class="stat-card">
+          <span>WPM</span>
+          <strong id="wpmValue">0</strong>
+        </div>
+        <div class="stat-card">
+          <span>Accuracy</span>
+          <strong id="accuracyValue">100%</strong>
+        </div>
+        <div class="stat-card">
+          <span>Mistakes</span>
+          <strong id="mistakeValue">0</strong>
+        </div>
+      </div>
+
+      <div class="progress-track" aria-hidden="true">
+        <div id="progressFill"></div>
+      </div>
+
+      <div class="typing-layout">
+        <section class="typing-workspace" aria-label="Typing test">
+          <div class="target-box" id="targetDisplay"></div>
+          <label class="field-block typing-field">
+            <span id="typingInputLabel">Type the text here</span>
+            <textarea id="typingInput" rows="7" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+          </label>
+          <div class="converted-preview hidden" id="convertedPreview">
+            <span>Converted Hindi input</span>
+            <p id="convertedPreviewText"></p>
+          </div>
+          <div class="actions">
+            <button class="primary-btn" type="button" id="startBtn">Start Test</button>
+            <button class="secondary-btn" type="button" id="newTextBtn">New Text</button>
+            <button class="ghost-btn" type="button" id="resetBtn">Reset</button>
+          </div>
+        </section>
+
+        <aside class="history-panel" aria-label="Typing history">
+          <div class="history-head">
+            <div>
+              <h3>Progress history</h3>
+              <p id="historySummary">No saved attempts yet.</p>
+            </div>
+            <button class="ghost-btn small" type="button" id="clearHistoryBtn">Clear</button>
+          </div>
+          <div class="result-panel hidden" id="resultPanel" role="status" aria-live="polite"></div>
+          <div class="history-list" id="historyList"></div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

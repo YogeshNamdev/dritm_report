@@ -1,0 +1,322 @@
+   <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<title>Little Rabbits</title>
+<link rel="stylesheet" href="css/main.css">
+<link rel="shortcut icon" href="<?php echo base_url(); ?>web_components/images/favicon.png" type="image/x-icon">
+
+<link href="<?php echo base_url(); ?>web_components/css/bootstrap.min.css" rel="stylesheet">
+<link href="<?php echo base_url(); ?>web_components/css/main.css" rel="stylesheet">
+<link href="<?php echo base_url(); ?>web_components/css/all.min.css" rel="stylesheet">
+<link href="<?php echo base_url(); ?>web_components/css/animate.css" rel="stylesheet">
+<link href="<?php echo base_url(); ?>web_components/css/dd.css" rel="stylesheet">
+<link href="<?php echo base_url(); ?>web_components/css/flags.css" rel="stylesheet">
+<link href="<?php echo base_url(); ?>web_components/css/flaticon.css" rel="stylesheet">
+<link href="<?php echo base_url(); ?>web_components/css/font-awesome.min.css" rel="stylesheet">
+<link href="<?php echo base_url(); ?>web_components/css/jquery.fancybox.css" rel="stylesheet">
+<link href="<?php echo base_url(); ?>web_components/css/magnific-popup.css" rel="stylesheet">
+<link href="<?php echo base_url(); ?>web_components/css/nice-select.css" rel="stylesheet">
+<link href="<?php echo base_url(); ?>web_components/css/odometer.css" rel="stylesheet">
+<link href="<?php echo base_url(); ?>web_components/css/owl.carousel.min.css" rel="stylesheet">
+<link href="<?php echo base_url(); ?>web_components/css/owl.theme.default.min.css" rel="stylesheet">
+<link href="<?php echo base_url(); ?>web_components/css/slick.css" rel="stylesheet">
+<link href="<?php echo base_url(); ?>web_components/css/slick-theme.css" rel="stylesheet">
+
+<!--
+<link rel="preload" href="<?php echo base_url(); ?>web_components/js/bootstrap.min.js" as="script">
+<link rel="preload" href="<?php echo base_url(); ?>web_components/js/isotope.pkgd.min.js" as="script">
+<link rel="preload" href="<?php echo base_url(); ?>web_components/js/jquery.dd.min.js" as="script">
+<link rel="preload" href="<?php echo base_url(); ?>web_components/js/jquery.fancybox.js" as="script">
+<link rel="preload" href="<?php echo base_url(); ?>web_components/js/jquery.js" as="script">
+<link rel="preload" href="<?php echo base_url(); ?>web_components/js/magnific-popup.min.js" as="script">
+<link rel="preload" href="<?php echo base_url(); ?>web_components/js/main.js" as="script">
+<link rel="preload" href="<?php echo base_url(); ?>web_components/js/map.js" as="script">
+<link rel="preload" href="<?php echo base_url(); ?>web_components/js/modernizr-3.6.0.min.js" as="script">
+<link rel="preload" href="<?php echo base_url(); ?>web_components/js/nice-select.js" as="script">
+<link rel="preload" href="<?php echo base_url(); ?>web_components/js/odometer.min.js" as="script">
+<link rel="preload" href="<?php echo base_url(); ?>web_components/js/owl.carousel.min.js" as="script">
+<link rel="preload" href="<?php echo base_url(); ?>web_components/js/plugins.js" as="script">
+<link rel="preload" href="<?php echo base_url(); ?>web_components/js/progress.js" as="script">
+<link rel="preload" href="<?php echo base_url(); ?>web_components/js/slick.min.js" as="script">
+<link rel="preload" href="<?php echo base_url(); ?>web_components/js/viewport.jquery.js" as="script">
+<link rel="preload" href="<?php echo base_url(); ?>web_components/js/wow.min.js" as="script"> -->
+
+<script src="<?php echo base_url(); ?>web_components/js/bootstrap.min.js"></script>
+<script src="<?php echo base_url(); ?>web_components/js/isotope.pkgd.min.js"></script>
+<script src="<?php echo base_url(); ?>web_components/js/jquery.dd.min.js"></script>
+<script src="<?php echo base_url(); ?>web_components/js/jquery.fancybox.js"></script>
+<script src="<?php echo base_url(); ?>web_components/js/jquery.js"></script>
+<script src="<?php echo base_url(); ?>web_components/js/magnific-popup.min.js"></script>
+<script src="<?php echo base_url(); ?>web_components/js/main.js"></script>
+<script src="<?php echo base_url(); ?>web_components/js/map.js"></script>
+<script src="<?php echo base_url(); ?>web_components/js/modernizr-3.6.0.min.js"></script>
+<script src="<?php echo base_url(); ?>web_components/js/nice-select.js"></script>
+<script src="<?php echo base_url(); ?>web_components/js/odometer.min.js"></script>
+<script src="<?php echo base_url(); ?>web_components/js/owl.carousel.min.js"></script>
+<script src="<?php echo base_url(); ?>web_components/js/plugins.js"></script>
+<script src="<?php echo base_url(); ?>web_components/js/slick.min.js"></script>
+<script src="<?php echo base_url(); ?>web_components/js/viewport.jquery.js"></script>
+<script src="<?php echo base_url(); ?>web_components/js/wow.min.js"></script>
+
+<!---share-link-on-facebook---->
+<meta property="og:title" content="Online Pre-School Programme" />
+<meta property="og:description" content="We Offer an ALL IN ONE Place for your Child’s Learning" />
+<meta property="og:image" content="<?php echo base_url(); ?>web_components/images/logo-02.png" />
+    
+    
+   
+    <header>
+      <div class="header-top d-none">
+            <div class="container">
+                <div class="header-top-area">
+                    <ul class="left">
+                         
+                        <li>
+                           <i class="fas fa-phone-alt"></i>  <a href="#">+91-8830657425</a> , <a href="#">
+
++91-9922179906</a>
+                        </li>
+                        <li>
+                            <i class="fas fa-envelope"></i> hello@littlerabbitspreschool.com
+                        </li>
+                    </ul>
+                    <ul class="social-icons">
+                        <li>
+                            <a href="#"><i class="fas fa-home"></i></a>
+                        </li>
+						<li>
+                            <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        </li>
+                        <li>
+                            <a href="#"><i class="fab fa-instagram"></i></a>
+                        </li>
+                        <li>
+                            <a href="#"><i class="fab fa-linkedin"></i></a>
+                        </li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div> 
+        <div class="header-bottom">
+            <div class="container-fluid container-fluid1">
+                <div class="header-wrapper">
+                    <div class="logo">
+                        <a href="index.php">
+                            <img src="<?php echo base_url(); ?>web_components/images/logo-02.png" width="100%" alt="logo">
+                        </a>
+                    </div>
+                    <div class="menu-area">
+                        <ul class="menu">
+                           <!-- <li>
+                                <a href="#0"><i class="fas fa-home"></i>Home</a>
+                                <ul class="submenu">
+                                    <li>
+
+                                        <a href="index.html">Home One</a>
+                                    </li>
+                                    <li>
+                                        <a href="index-2.html" class="active">Home Two</a>
+                                    </li>
+                                </ul>
+                            </li>-->
+                             
+							
+							<li>
+                                <a href="<?php echo base_url(); ?>online-pre-school-programme">Online Pre-School</a>
+                            </li>
+							
+							<!--<li>
+                                <a href="#"> Pre-Primary</a>
+                            </li>
+							
+							<li>
+                                <a href="#"> Grade 1 to 3</a>
+
+                            </li>
+                         
+                            <li>
+                                <a href="#"> Phonics & Spoken English</a>
+                            </li>-->
+							
+							<li>
+                                <a href="https://docs.google.com/forms/d/e/1FAIpQLSftYX_AnRLxB6cUiCAyiFNcY8dRoXqahl_hEgiXbdOmi7df4A/viewform" target="_blank"> Teach With Us</a>
+                            </li>
+                           <!-- <li>
+                                <a href="#0"><i class="fas fa-layer-group"></i>Pages</a>
+                                <ul class="submenu">
+                                    <li>
+                                        <a href="#0">Teacher</a>
+                                        <ul class="submenu">
+                                            <li>
+                                                <a href="teacher.html">Our Teacher</a>
+
+                                            </li>
+                                            <li>
+                                                <a href="teacher-single.html">Teacher Single</a>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li>
+                                        <a href="#0">Account</a>
+                                        <ul class="submenu">
+
+                                            <li>
+                                                <a href="login.html">Sign In</a>
+                                            </li>
+                                            <li>
+                                                <a href="registration.html">Sign Up</a>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li>
+                                        <a href="#0">Events</a>
+                                        <ul class="submenu">
+                                            <li>
+                                                <a href="events.html">Our Events</a>
+                                            </li>
+                                            <li>
+                                                <a href="events-single.html">Events Single</a>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li>
+                                        <a href="#0">Shop</a>
+                                        <ul class="submenu">
+                                            <li>
+                                                <a href="shop.html">Our Shop</a>
+                                            </li>
+                                            <li>
+                                                <a href="shop-single.html">Shop Single</a>
+                                            </li>
+                                            <li>
+                                                <a href="cart.html">Cart</a>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li>
+                                        <a href="faqs.html">Faqs</a>
+                                    </li>
+                                    <li>
+                                        <a href="#0">Our Gallery</a>
+                                        <ul class="submenu">
+                                            <li>
+                                                <a href="gallery.html">Gallery One</a>
+                                            </li>
+                                            <li>
+                                                <a href="gallery-2.html">Gallery Two</a>
+                                            </li>
+                                            <li>
+                                                <a href="gallery-3.html">Gallery Three</a>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li>
+                                        <a href="coming-soon.html">Coming Soon</a>
+                                    </li>
+                                    <li>
+                                        <a href="error-page.html">404 Error</a>
+                                    </li>
+                                </ul>
+                            </li>-->
+                            
+							
+							<li>
+                                <a href="<?php echo base_url(); ?>learning-videos"> Learning Videos</a>
+                            </li>
+							
+							<li>
+                                <a href="<?php echo base_url(); ?>online-pre-school-programme#admissionprocess"> Admission Process</a>
+                            </li>
+							<li>
+                                <a href="<?php echo base_url(); ?>refer-a-friend"> Refer a Friend</a>
+                            </li>
+							 
+                        </ul>
+                        
+                         <!--<div class="search-button">
+                            
+                        </div>-->
+                        
+                        <div class="header-bar d-lg-none">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                        <div class="ellepsis-bar d-none d-lg-none">
+                            <i class="fas fa-ellipsis-h"></i>
+                        </div> 
+						
+						<div class="ellepsis-bar d-none d-lg-block">
+                         
+						 <a href="#" class="header-btn" data-toggle="modal" data-target="#exampleModal"><span> FREE TRIAL  </span></a>
+                        </div>
+						<div class="ellepsis-bar1 d-none d-lg-block"> 
+		<!--<form action="/action_page.php">
+   
+  <select name="Country" id="Country">
+    <option value="ind"> INDIA</option>
+	 <option value="can">CANADA</option>
+    <option value="usa"> USA</option>
+ 
+  </select>
+ 
+  
+</form>-->
+
+<div class="dropdown">
+   <button class="dropbtn" id="slidetoggle" onclick="slidetoggle_div();"><img src="<?php echo base_url(); ?>web_components/images/india.png" width="20px" class="mrgt-3"> IND
+    <i class="fa fa-caret-down"></i>
+  </button>
+  <div class="dropdown-content" id="div1">
+    <a href="#"><img src="<?php echo base_url(); ?>web_components/images/india.png" width="20px" class="mrgt-3"> IND</a>
+	<a href="#"><img src="<?php echo base_url(); ?>web_components/images/canada.png" width="20px" class="mrgt-3"> CAN</a>
+    <a href="#"><img src="<?php echo base_url(); ?>web_components/images/usa.png" width="20px" class="mrgt-3"> USA</a>
+	<a href="#"><img src="<?php echo base_url(); ?>web_components/images/aus.png" width="20px" class="mrgt-3"> AUS</a>
+	<a href="#"><img src="<?php echo base_url(); ?>web_components/images/uae.png" width="20px" class="mrgt-3"> UAE</a>
+     
+  </div> 
+ 
+  </div> 
+
+
+                        </div>
+                        
+                         
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+	
+	
+	<div class="icon-bar">
+<a class="whatsapp-1" href="#" rel="nofollow" target="_blank"><i class="fa fa-whatsapp"></i></a>
+
+<a class="phone-1" href="#" rel="nofollow" target="_blank"><i class="fa fa-phone"></i></a> 
+ 
+</div>
+
+
+	 <!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title  text-center" id="exampleModalLabel">Book 3 Days Free Trial</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="box-shadow: none; text-align: right;">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+      <?php include "enquiry-form-new.php";?>
+      </div>
+   
+    </div>
+  </div>
+</div>
+</head>
+<body>

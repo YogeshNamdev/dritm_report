@@ -1,0 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Alatsi&family=Fredoka+One&display=swap');
+
+    h1{font-family: 'Alatsi', sans-serif;
+font-family: 'Fredoka One', cursive; font-size:40px; color:#fff;}
+
+h3{font-family: 'Alatsi', sans-serif;
+font-family: 'Fredoka One', cursive; font-size:22px; color:#fff;}
+
+p{font-size:16px; color:#fff;}
+
+.fs{font-size:20px;}
+
+	#welcome-sec{background-image: url('../images/bg-img-02.jpg');padding-top: 37px;
+    padding-bottom: 50px;    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;}
+	
+	.mrgtop20{margin-top:20px;}
+	
+	
+	.btn-ctrl1{background: #ec006b;
+    color: #fff;
+    border: 0;
+    padding: 8px 23px;
+    border:0;
+    border-top-left-radius: 10px;
+    border-bottom-right-radius: 10px;}
+	
+	.btn-ctrl1:hover{background: #85d2e2;
+    color: #fff;
+    border: 0;
+    padding: 8px 23px;
+    border:0;
+    border-top-left-radius: 10px;
+    border-bottom-right-radius: 10px;}
+	
+	 
+	
+	@media (max-width:768px){
+		
+		.offset-2 {
+    margin-left: 0;
+}
+		
+	 
+		
+		
+	}

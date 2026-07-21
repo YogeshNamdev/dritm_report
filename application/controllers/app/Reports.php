@@ -1,0 +1,2274 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+class Reports extends CI_Controller {
+
+    private $report_roles = array(1, 2, 3, 4, 5);
+    private $add_roles = array(1, 2 ,3, 4 , 5);
+    private $update_roles = array(1, 3);
+    private $agent_report_roles = array(1, 2 , 5);
+    
+    public function __construct(){
+        parent::__construct();
+        if(!isset($_SESSION['userdata']) || $_SESSION['userdata']['user_logged_status'] != TRUE)
+        {
+        redirect('app/logout');
+        }
+        if(!$this->is_allowed($this->report_roles))
+        {
+            show_error('You are not authorized to access reports.', 403);
+        }
+        $this->load->model("Report_m");
+        
+    }
+
+    private function is_allowed($roles)
+    {
+        return isset($_SESSION["userdata"]["role_id"]) && in_array((int)$_SESSION["userdata"]["role_id"], $roles);
+    }
+
+    private function deny_json()
+    {
+        echo json_encode(array("response" => FALSE, "message" => "You are not authorized to perform this action."));
+        return FALSE;
+    }
+
+    private function current_role_id()
+    {
+        return (int)$_SESSION["userdata"]["role_id"];
+    }
+
+    private function current_emp_id()
+    {
+        return (int)$_SESSION["userdata"]["emp_id"];
+    }
+
+    private function allowed_complaint_statuses()
+    {
+        return array('Open', 'PC', 'WIP', 'OWA', 'Closed','Force Closed');
+    }
+
+    private function normalize_complaint_status($status)
+    {
+        $status = trim((string)$status);
+        return in_array($status, $this->allowed_complaint_statuses()) ? $status : 'Open';
+    }
+
+    private function resolution_report_meta($report_key)
+    {
+        $map = array(
+            'no_same' => array(
+                'table' => 'no_same_resolution_report',
+                'name' => 'No/Same Resolution Report',
+                'update_method' => 'update_no_or_same_resolutions'
+            ),
+            'copy_paste' => array(
+                'table' => 'copy_paste_wrong_resolution_report',
+                'name' => 'Copy/Paste Resolution Report',
+                'update_method' => 'update_copypaste_resolutions'
+            ),
+            'direction' => array(
+                'table' => 'direction_report',
+                'name' => 'Direction Report',
+                'update_method' => 'update_direction_resolutions'
+            )
+        );
+        return isset($map[$report_key]) ? $map[$report_key] : FALSE;
+    }
+
+    private function add_resolution_history($report_key, $record, $previous_status, $new_status, $action_type)
+    {
+        $meta = $this->resolution_report_meta($report_key);
+        if($meta == FALSE || $record == FALSE)
+        {
+            return FALSE;
+        }
+
+        $previous_status = ($previous_status == "") ? NULL : $previous_status;
+        $new_status = ($new_status == "") ? NULL : $new_status;
+
+        return $this->Report_m->insert_complaint_status_history(array(
+            'report_key' => $report_key,
+            'report_name' => $meta['name'],
+            'record_id' => (int)$record->id,
+            'complaint_no' => (int)$record->complaint_no,
+            'previous_complaint_status' => $previous_status,
+            'new_complaint_status' => $new_status,
+            'action_type' => $action_type,
+            'officer_worked' => ($previous_status !== NULL && $new_status !== NULL && $previous_status != $new_status) ? 1 : 0,
+            'helpdesk_remark' => isset($record->helpdesk_remark) ? $record->helpdesk_remark : NULL,
+            'other_remark' => isset($record->remark) ? $record->remark : NULL,
+            'updated_by' => $this->current_emp_id(),
+            'updated_at' => date('Y-m-d H:i:s'),
+            'created_by' => isset($record->added_by) ? (int)$record->added_by : $this->current_emp_id(),
+            'created_at' => isset($record->added_at) ? $record->added_at : date('Y-m-d H:i:s')
+        ));
+    }
+
+    private function normalize_callback_remark($remark_type, $remark_other)
+    {
+        return ($remark_type == "Other") ? trim($remark_other) : $remark_type;
+    }
+
+    private function require_agent_report_access()
+    {
+        if(!$this->is_allowed($this->agent_report_roles))
+        {
+            show_error('You are not authorized to access this report.', 403);
+        }
+    }
+
+
+    
+    public function NoOrSameResolutionDetails($page = "list"){
+        $data = array();
+		if(!file_exists(APPPATH.'views/reports/NoOrSameResolutionDetails/'.$page.'.php'))
+		{
+		show_404();
+		}
+        
+        $data["user_list"] = $this->Report_m->get_all_user_list();
+        $data["department_list"] = $this->Report_m->get_all_departments();
+        $data["district_list"] = $this->Report_m->get_all_district();
+        $data["issue_list"] = $this->Report_m->get_all_issue(1);
+		$data["title"] = "No Or Same Resolution Report";
+		$this->load->view('app/templates/header' , $data);
+		$this->load->view('app/templates/side_panel' , $data);
+		$this->load->view('reports/NoOrSameResolutionDetails/'.$page , $data);
+		$this->load->view('app/templates/footer' , $data);
+    }
+
+    public function CopyPasteResolutionReport($page = "list"){
+        $data = array();
+		if(!file_exists(APPPATH.'views/reports/CopyPasteResolutionReport/'.$page.'.php'))
+		{
+		show_404();
+		}
+        $data["user_list"] = $this->Report_m->get_all_user_list();
+        $data["department_list"] = $this->Report_m->get_all_departments();
+        $data["district_list"] = $this->Report_m->get_all_district();
+        $data["issue_list"] = $this->Report_m->get_all_issue(2);
+		$data["title"] = "Copy paste Resolution Report";
+		$this->load->view('app/templates/header' , $data);
+		$this->load->view('app/templates/side_panel' , $data);
+		$this->load->view('reports/CopyPasteResolutionReport/'.$page , $data);
+		$this->load->view('app/templates/footer' , $data);
+    }
+
+    public function DirectionReport($page = "list"){
+        $data = array();
+		if(!file_exists(APPPATH.'views/reports/DirectionReport/'.$page.'.php'))
+		{
+		show_404();
+		}
+        $data["user_list"] = $this->Report_m->get_all_user_list();
+        $data["department_list"] = $this->Report_m->get_all_departments();
+        $data["district_list"] = $this->Report_m->get_all_district();
+        $data["issue_list"] = $this->Report_m->get_all_issue(3);
+		$data["title"] = "Direction Report";
+		
+		$this->load->view('app/templates/header' , $data);
+		$this->load->view('app/templates/side_panel' , $data);
+		$this->load->view('reports/DirectionReport/'.$page , $data);
+		$this->load->view('app/templates/footer' , $data);
+    }
+
+    public function OwaForm($page = "owaform"){
+        $data = array();
+		if(!file_exists(APPPATH.'views/reports/OWAReport/'.$page.'.php'))
+		{
+		show_404();
+		}
+        
+        $data["user_list"] = $this->Report_m->get_all_owa_user_list();
+        $data["department_list"] = $this->Report_m->get_all_departments();
+        $data["district_list"] = $this->Report_m->get_all_district();
+        $data["attribute_list"] = $this->Report_m->get_all_attribute();
+		$data["title"] = "OWA FORM";
+		$this->load->view('app/templates/header' , $data);
+		$this->load->view('app/templates/side_panel' , $data);
+		$this->load->view('reports/OWAReport/'.$page , $data);
+		$this->load->view('app/templates/footer' , $data);
+    }
+
+    public function OwaList($page = "owalist"){
+        $data = array();
+		if(!file_exists(APPPATH.'views/reports/OWAReport/'.$page.'.php'))
+		{
+		show_404();
+		}
+         $data["user_list"] = $this->Report_m->get_all_owa_user_list();
+		$data["title"] = "OWA LIST";
+		$this->load->view('app/templates/header' , $data);
+		$this->load->view('app/templates/side_panel' , $data);
+		$this->load->view('reports/OWAReport/'.$page , $data);
+		$this->load->view('app/templates/footer' , $data);
+    }
+
+    public function TATManagement($page = "list"){
+        $data = array();
+		if(!file_exists(APPPATH.'views/reports/TATManagement/'.$page.'.php'))
+		{
+		    show_404();
+		}
+        $data["department_list"] = $this->Report_m->get_all_departments();
+		$data["title"] = "TAT Management";
+		$this->load->view('app/templates/header' , $data);
+		$this->load->view('app/templates/side_panel' , $data);
+		$this->load->view('reports/TATManagement/'.$page , $data);
+		$this->load->view('app/templates/footer' , $data);
+    }
+
+    public function PSMAuditDashboard($page = "list"){
+        $data = array();
+		if(!file_exists(APPPATH.'views/reports/PSMAuditDashboard/'.$page.'.php'))
+		{
+		    show_404();
+		}
+        $data["department_list"] = $this->Report_m->get_live_departments();
+        $data["district_list"] = $this->Report_m->get_live_districts();
+        $data["officer_list"] = $this->Report_m->get_live_officers();
+		$data["title"] = "PSM Audit Dashboard";
+		$this->load->view('app/templates/header' , $data);
+		$this->load->view('app/templates/side_panel' , $data);
+		$this->load->view('reports/PSMAuditDashboard/'.$page , $data);
+		$this->load->view('app/templates/footer' , $data);
+    }
+
+    private function psm_report_filters()
+    {
+        return array(
+            "from_date" => $this->input->post("from_date", TRUE),
+            "to_date" => $this->input->post("to_date", TRUE),
+            "complaint_no" => $this->input->post("complaint_no", TRUE),
+            "department" => $this->input->post("department", TRUE),
+            "officer" => $this->input->post("officer", TRUE),
+            "current_officer" => $this->input->post("current_officer", TRUE),
+            "login_user_id" => $this->input->post("login_user_id", TRUE),
+            "complaint_status" => $this->input->post("complaint_status", TRUE),
+            "district" => $this->input->post("district", TRUE)
+        );
+    }
+
+    public function get_psm_report_tab()
+    {
+        $data = array();
+        if($this->input->is_ajax_request())
+        {
+            $report_type = $this->input->post("report_type", TRUE);
+            $filters = $this->psm_report_filters();
+            $data["response"] = TRUE;
+            $data["report_type"] = $report_type;
+
+            switch($report_type)
+            {
+                case "audit":
+                    $data["all_record"] = $this->Report_m->get_psm_audit_report($filters);
+                    break;
+                case "history":
+                    $data["all_record"] = $this->Report_m->get_psm_history_report($filters);
+                    break;
+                case "officer":
+                    $data["all_record"] = $this->Report_m->get_psm_officer_analysis($filters);
+                    break;
+                case "department":
+                    $data["all_record"] = $this->Report_m->get_psm_department_analysis($filters);
+                    break;
+                case "repeated":
+                    $data["all_record"] = $this->Report_m->get_psm_top_repeated_complaints($filters);
+                    break;
+                case "same_officer":
+                    $data["all_record"] = $this->Report_m->get_psm_same_officer_repeated_report($filters);
+                    break;
+                case "complaint_summary":
+                    $data["all_record"] = $this->Report_m->get_psm_complaint_summary_report($filters);
+                    break;
+                default:
+                    $data["response"] = FALSE;
+                    $data["message"] = "Invalid report type.";
+                    $data["all_record"] = array();
+                    break;
+            }
+
+            if($data["response"] == TRUE)
+            {
+                $data["total_record"] = count($data["all_record"]);
+                $data["message"] = $data["total_record"]." Record Found.";
+            }
+        }
+        else
+        {
+            $data["response"] = FALSE;
+            $data["message"] = "Invalid Request.";
+        }
+        echo json_encode($data);
+    }
+
+    public function get_psm_complaint_timeline()
+    {
+        $data = array();
+        if($this->input->is_ajax_request())
+        {
+            $complaint_no = $this->input->post("complaint_no", TRUE);
+            if(empty($complaint_no))
+            {
+                $data["response"] = FALSE;
+                $data["message"] = "Complaint number is required.";
+                echo json_encode($data);
+                return;
+            }
+
+            $timeline = $this->Report_m->get_psm_complaint_timeline($complaint_no);
+            $events = $timeline["events"];
+            $data["response"] = TRUE;
+            $data["complaint_no"] = $complaint_no;
+            $data["summary"] = $timeline["summary"];
+            $data["all_record"] = $events;
+            $data["total_record"] = count($events);
+            $data["message"] = count($events)." timeline record(s) found.";
+        }
+        else
+        {
+            $data["response"] = FALSE;
+            $data["message"] = "Invalid Request.";
+        }
+        echo json_encode($data);
+    }
+
+    public function get_psm_audit_dashboard()
+    {
+        $data = array();
+        if($this->input->is_ajax_request())
+        {
+            $filters = $this->psm_report_filters();
+
+            $summary = $this->Report_m->get_psm_summary($filters);
+            $data["response"] = TRUE;
+            $data["summary"] = $summary;
+            $data["audit"] = $this->Report_m->get_psm_audit_report($filters);
+            $data["history"] = $this->Report_m->get_psm_history_report($filters);
+            $data["officer_analysis"] = $this->Report_m->get_psm_officer_analysis($filters);
+            $data["department_analysis"] = $this->Report_m->get_psm_department_analysis($filters);
+            $data["top_repeated"] = $this->Report_m->get_psm_top_repeated_complaints($filters);
+            $data["same_officer_repeated"] = $this->Report_m->get_psm_same_officer_repeated_report($filters);
+            $data["complaint_summary"] = $this->Report_m->get_psm_complaint_summary_report($filters);
+        }
+        else
+        {
+            $data["response"] = FALSE;
+            $data["message"] = "Invalid Request.";
+        }
+        echo json_encode($data);
+    }
+
+    public function SendToLowerLevelDashboard($page = "list"){
+        $data = array();
+		if(!file_exists(APPPATH.'views/reports/SendToLowerLevelDashboard/'.$page.'.php'))
+		{
+		    show_404();
+		}
+        $data["department_list"] = $this->Report_m->get_live_departments();
+        $data["district_list"] = $this->Report_m->get_live_districts();
+        $data["officer_list"] = $this->Report_m->get_live_officers();
+		$data["title"] = "Send to Lower Level Dashboard";
+		$this->load->view('app/templates/header' , $data);
+		$this->load->view('app/templates/side_panel' , $data);
+		$this->load->view('reports/SendToLowerLevelDashboard/'.$page , $data);
+		$this->load->view('app/templates/footer' , $data);
+    }
+
+    private function lower_level_report_filters()
+    {
+        return array(
+            "from_date" => $this->input->post("from_date", TRUE),
+            "to_date" => $this->input->post("to_date", TRUE),
+            "complaint_no" => $this->input->post("complaint_no", TRUE),
+            "department" => $this->input->post("department", TRUE),
+            "officer" => $this->input->post("officer", TRUE),
+            "current_officer" => $this->input->post("current_officer", TRUE),
+            "login_user_id" => $this->input->post("login_user_id", TRUE),
+            "complaint_status" => $this->input->post("complaint_status", TRUE),
+            "district" => $this->input->post("district", TRUE)
+        );
+    }
+
+    public function get_lower_level_report_tab()
+    {
+        $data = array();
+        if($this->input->is_ajax_request())
+        {
+            $report_type = $this->input->post("report_type", TRUE);
+            $filters = $this->lower_level_report_filters();
+            $data["response"] = TRUE;
+            $data["report_type"] = $report_type;
+
+            switch($report_type)
+            {
+                case "audit":
+                    $data["all_record"] = $this->Report_m->get_lower_level_audit_report($filters);
+                    break;
+                case "history":
+                    $data["all_record"] = $this->Report_m->get_lower_level_history_report($filters);
+                    break;
+                case "officer":
+                    $data["all_record"] = $this->Report_m->get_lower_level_officer_report($filters);
+                    break;
+                case "same_officer":
+                    $data["all_record"] = $this->Report_m->get_lower_level_same_officer_report($filters);
+                    break;
+                case "complaint_summary":
+                    $data["all_record"] = $this->Report_m->get_lower_level_complaint_summary_report($filters);
+                    break;
+                default:
+                    $data["response"] = FALSE;
+                    $data["message"] = "Invalid report type.";
+                    $data["all_record"] = array();
+                    break;
+            }
+
+            if($data["response"] == TRUE)
+            {
+                $data["total_record"] = count($data["all_record"]);
+                $data["message"] = $data["total_record"]." Record Found.";
+            }
+        }
+        else
+        {
+            $data["response"] = FALSE;
+            $data["message"] = "Invalid Request.";
+        }
+        echo json_encode($data);
+    }
+
+    public function get_lower_level_complaint_timeline()
+    {
+        $data = array();
+        if($this->input->is_ajax_request())
+        {
+            $complaint_no = $this->input->post("complaint_no", TRUE);
+            if(empty($complaint_no))
+            {
+                $data["response"] = FALSE;
+                $data["message"] = "Complaint number is required.";
+                echo json_encode($data);
+                return;
+            }
+
+            $timeline = $this->Report_m->get_lower_level_complaint_timeline($complaint_no);
+            $events = $timeline["events"];
+            $data["response"] = TRUE;
+            $data["complaint_no"] = $complaint_no;
+            $data["summary"] = $timeline["summary"];
+            $data["all_record"] = $events;
+            $data["total_record"] = count($events);
+            $data["message"] = count($events)." timeline record(s) found.";
+        }
+        else
+        {
+            $data["response"] = FALSE;
+            $data["message"] = "Invalid Request.";
+        }
+        echo json_encode($data);
+    }
+
+    public function get_all_tat_mappings()
+    {
+        $data = array();
+        if($this->input->is_ajax_request())
+        {
+            $r = $this->Report_m->get_tat_mappings();
+            if($r != FALSE)
+            {
+                $data["response"] = TRUE;
+                $data["message"] = count($r)." Record Found.";
+                $data["total_record"] = count($r);
+                $data["all_record"] = $r;
+            }
+            else
+            {
+                $data["response"] = FALSE;
+                $data["message"] = "No TAT mapping found.";
+            }
+        }
+        echo json_encode($data);
+    }
+
+    public function CallbackReport($page = "list"){
+        $this->require_agent_report_access();
+        $data = array();
+		if(!file_exists(APPPATH.'views/reports/CallbackReport/'.$page.'.php'))
+		{
+		show_404();
+		}
+        $data["user_list"] = $this->Report_m->get_all_user_list();
+        $data["department_list"] = $this->Report_m->get_all_departments();
+		$data["title"] = "Callback Report";
+		$this->load->view('app/templates/header' , $data);
+		$this->load->view('app/templates/side_panel' , $data);
+		$this->load->view('reports/CallbackReport/'.$page , $data);
+		$this->load->view('app/templates/footer' , $data);
+    }
+
+    public function NameChangeReport($page = "list"){
+        $this->require_agent_report_access();
+        $data = array();
+		if(!file_exists(APPPATH.'views/reports/NameChangeReport/'.$page.'.php'))
+		{
+		show_404();
+		}
+        $data["user_list"] = $this->Report_m->get_all_user_list();
+		$data["title"] = "Name Change Report";
+		$this->load->view('app/templates/header' , $data);
+		$this->load->view('app/templates/side_panel' , $data);
+		$this->load->view('reports/NameChangeReport/'.$page , $data);
+		$this->load->view('app/templates/footer' , $data);
+    }
+
+    public function CreatationReport($page = "list"){
+        $data = array();
+		if(!file_exists(APPPATH.'views/reports/CreatationReport/'.$page.'.php'))
+		{
+		show_404();
+		}
+        $data["department_list"] = $this->Report_m->get_all_departments();
+        $data["attribute_list"] = $this->Report_m->get_all_attribute();
+        //print_r($data["attribute_list"]);die;
+		$data["title"] = "Creatation Report";
+		$this->load->view('app/templates/header' , $data);
+		$this->load->view('app/templates/side_panel' , $data);
+		$this->load->view('reports/CreatationReport/'.$page , $data);
+		$this->load->view('app/templates/footer' , $data);
+    }
+
+    public function get_all_no_same_resolution_details()
+    {
+        $data = array();
+        if($this->input->is_ajax_request())
+        {
+        $remark = (isset($_POST["remark"]))?$this->input->post("remark" , TRUE):"0";
+        $shift = (isset($_POST["shift"]))?$this->input->post("shift" , TRUE):"morning";
+        
+        $r = $this->Report_m->get_all_no_same_resolution_details($shift,$remark);
+        if($r != FALSE)
+            {
+            $data["response"] = TRUE;
+            $data["message"] = count($r)." Record Found.";
+            $data["total_record"] = count($r);
+            $data["all_record"] = $r;
+            }
+        else
+            {
+            $data["response"] = FALSE;
+            $data["message"] = "No Record Found.";
+            }
+        }
+        echo json_encode($data);
+    }
+
+    public function get_all_copypaste_details()
+    {
+        $data = array();
+        if($this->input->is_ajax_request())
+        {
+        $remark = (isset($_POST["remark"]))?$this->input->post("remark" , TRUE):"0";
+        $shift = (isset($_POST["shift"]))?$this->input->post("shift" , TRUE):"morning";
+        $r = $this->Report_m->get_all_copypaste_details($shift, $remark);
+        if($r != FALSE)
+            {
+            $data["response"] = TRUE;
+            $data["message"] = count($r)." Record Found.";
+            $data["total_record"] = count($r);
+            $data["all_record"] = $r;
+            }
+        else
+            {
+            $data["response"] = FALSE;
+            $data["message"] = "No Record Found.";
+            }
+        }
+        echo json_encode($data);
+    }
+
+    public function get_all_direction_details()
+    {
+        $data = array();
+        if($this->input->is_ajax_request())
+        {
+            $remark = (isset($_POST["remark"]))?$this->input->post("remark" , TRUE):"0";
+        $shift = (isset($_POST["shift"]))?$this->input->post("shift" , TRUE):"morning";
+        $r = $this->Report_m->get_all_direction_details($shift,$remark);
+        if($r != FALSE)
+            {
+            $data["response"] = TRUE;
+            $data["message"] = count($r)." Record Found.";
+            $data["total_record"] = count($r);
+            $data["all_record"] = $r;
+            }
+        else
+            {
+            $data["response"] = FALSE;
+            $data["message"] = "No Record Found.";
+            }
+        }
+        echo json_encode($data);
+    }
+
+    public function get_all_owa_details()
+    {
+        $data = array();
+        if($this->input->is_ajax_request())
+        {
+        $start_date = $this->input->post('start_date');
+        $end_date = $this->input->post('end_date');
+        $agent_id = $this->input->post('agent_id');
+        $r = $this->Report_m->get_all_owa_details($start_date, $end_date , $agent_id);
+        if($r != FALSE)
+            {
+            $data["response"] = TRUE;
+            $data["message"] = count($r)." Record Found.";
+            $data["total_record"] = count($r);
+            $data["all_record"] = $r;
+            }
+        else
+            {
+            $data["response"] = FALSE;
+            $data["message"] = "No Record Found.";
+            }
+        }
+        echo json_encode($data);
+    }
+
+    public function get_all_callback_details()
+    {
+        if(!$this->is_allowed($this->agent_report_roles)) { return $this->deny_json(); }
+        $data = array();
+        if($this->input->is_ajax_request())
+        {
+            $r = $this->Report_m->get_callback_reports($this->current_role_id(), $this->current_emp_id());
+            if($r != FALSE)
+            {
+                $data["response"] = TRUE;
+                $data["message"] = count($r)." Record Found.";
+                $data["total_record"] = count($r);
+                $data["all_record"] = $r;
+                $data["emp_id"] = $this->current_emp_id();
+            }
+            else
+            {
+                $data["response"] = FALSE;
+                $data["message"] = "No Record Found.";
+            }
+        }
+        echo json_encode($data);
+    }
+
+    public function add_callback_details()
+    {
+        if(!$this->is_allowed($this->agent_report_roles)) { return $this->deny_json(); }
+        $data = array();
+        if ($this->input->post()) {
+            $remark_type = $this->input->post('remark_type');
+            $remark_other = $this->input->post('remark_other');
+            $latest_remark = $this->normalize_callback_remark($remark_type, $remark_other);
+            $agent_id = ($this->current_role_id() == 1) ? (int)$this->input->post('agent_id') : $this->current_emp_id();
+
+            if(trim($latest_remark) == "")
+            {
+                $data["response"] = FALSE;
+                $data["message"] = "Enter remark.";
+                echo json_encode($data);
+                return;
+            }
+
+            $details = $this->Report_m->insert_callback_report([
+                'date'              => $this->input->post('date'),
+                'phone_number'      => $this->input->post('phone_number'),
+                'agent_id'          => $agent_id,
+                'assigned_agent_id' => $agent_id,
+                'department'        => $this->input->post('department'),
+                'remark_type'       => $remark_type,
+                'remark_other'      => ($remark_type == "Other") ? $remark_other : NULL,
+                'latest_remark'     => $latest_remark,
+                'created_by'        => $this->current_emp_id()
+            ]);
+
+            if ($details > 0) {
+                $this->Report_m->insert_callback_history([
+                    'callback_id'       => $details,
+                    'action_type'       => 'create',
+                    'new_agent_id'      => $agent_id,
+                    'remark_type'       => $remark_type,
+                    'remark_other'      => ($remark_type == "Other") ? $remark_other : NULL,
+                    'remark_text'       => $latest_remark,
+                    'updated_by'        => $this->current_emp_id()
+                ]);
+                $data["response"] = TRUE;
+                $data["message"]  = "Callback details added.";
+            } else {
+                $data["response"] = FALSE;
+                $data["message"]  = "Failed to add callback details.";
+            }
+        } else {
+            $data["response"] = FALSE;
+            $data["message"]  = "Invalid Request.";
+        }
+        echo json_encode($data);
+    }
+
+    public function update_callback_details()
+    {
+        if(!$this->is_allowed($this->agent_report_roles)) { return $this->deny_json(); }
+        $data = array();
+        if ($this->input->post()) {
+            $id = (int)$this->input->post('hidden_id');
+            $record = $this->Report_m->get_callback_report_by_id($id);
+            if($record == FALSE)
+            {
+                $data["response"] = FALSE;
+                $data["message"] = "Invalid callback record.";
+                echo json_encode($data);
+                return;
+            }
+            if($this->current_role_id() != 1 && (int)$record->assigned_agent_id !== $this->current_emp_id() && (int)$record->created_by !== $this->current_emp_id())
+            {
+                return $this->deny_json();
+            }
+
+            $new_agent_id = ($this->current_role_id() == 1) ? (int)$this->input->post('agent_id') : (int)$record->assigned_agent_id;
+            $assignment_changed = ((int)$record->assigned_agent_id !== $new_agent_id);
+            $remark_type = $this->input->post('remark_type');
+            $remark_other = $this->input->post('remark_other');
+            $has_remark = ($remark_type != "" && $remark_type != "0");
+            $latest_remark = $has_remark ? $this->normalize_callback_remark($remark_type, $remark_other) : "";
+
+            if($has_remark && trim($latest_remark) == "")
+            {
+                $data["response"] = FALSE;
+                $data["message"] = "Enter remark.";
+                echo json_encode($data);
+                return;
+            }
+            if(!$has_remark && !$assignment_changed)
+            {
+                $data["response"] = FALSE;
+                $data["message"] = "Select another agent or add a remark.";
+                echo json_encode($data);
+                return;
+            }
+
+            $update_arr = [
+                'agent_id'          => $new_agent_id,
+                'assigned_agent_id' => $new_agent_id,
+                'updated_by'        => $this->current_emp_id(),
+                'updated_at'        => date('Y-m-d H:i:s')
+            ];
+            if($has_remark)
+            {
+                $update_arr['remark_type'] = $remark_type;
+                $update_arr['remark_other'] = ($remark_type == "Other") ? $remark_other : NULL;
+                $update_arr['latest_remark'] = $latest_remark;
+            }
+
+            $updated = $this->Report_m->update_callback_report($id, $update_arr);
+            if($assignment_changed)
+            {
+                $this->Report_m->insert_callback_history([
+                    'callback_id'       => $id,
+                    'action_type'       => 'assign',
+                    'previous_agent_id' => (int)$record->assigned_agent_id,
+                    'new_agent_id'      => $new_agent_id,
+                    'updated_by'        => $this->current_emp_id()
+                ]);
+            }
+            if($has_remark)
+            {
+                $this->Report_m->insert_callback_history([
+                    'callback_id'       => $id,
+                    'action_type'       => 'update',
+                    'previous_agent_id' => (int)$record->assigned_agent_id,
+                    'new_agent_id'      => $new_agent_id,
+                    'remark_type'       => $remark_type,
+                    'remark_other'      => ($remark_type == "Other") ? $remark_other : NULL,
+                    'remark_text'       => $latest_remark,
+                    'updated_by'        => $this->current_emp_id()
+                ]);
+            }
+
+            $data["response"] = TRUE;
+            if($assignment_changed && !$has_remark)
+            {
+                $data["message"] = "Callback assigned successfully.";
+            }
+            else
+            {
+                $data["message"] = ($updated > 0) ? "Callback details updated." : "History saved.";
+            }
+        } else {
+            $data["response"] = FALSE;
+            $data["message"] = "Invalid Request.";
+        }
+        echo json_encode($data);
+    }
+
+    public function get_callback_history()
+    {
+        //if(!$this->is_allowed(array(1))) { return $this->deny_json(); }
+        $data = array();
+        if($this->input->is_ajax_request())
+        {
+            $callback_id = (int)$this->input->post("callback_id");
+            $r = $this->Report_m->get_callback_history($callback_id);
+            if($r != FALSE)
+            {
+                $data["response"] = TRUE;
+                $data["message"] = count($r)." Record Found.";
+                $data["total_record"] = count($r);
+                $data["all_record"] = $r;
+            }
+            else
+            {
+                $data["response"] = FALSE;
+                $data["message"] = "No History Found.";
+            }
+        }
+        echo json_encode($data);
+    }
+
+    public function get_all_name_change_details()
+    {
+        if(!$this->is_allowed($this->agent_report_roles)) { return $this->deny_json(); }
+        $data = array();
+        if($this->input->is_ajax_request())
+        {
+            $r = $this->Report_m->get_name_change_reports($this->current_role_id(), $this->current_emp_id());
+            if($r != FALSE)
+            {
+                $data["response"] = TRUE;
+                $data["message"] = count($r)." Record Found.";
+                $data["total_record"] = count($r);
+                $data["all_record"] = $r;
+            }
+            else
+            {
+                $data["response"] = FALSE;
+                $data["message"] = "No Record Found.";
+            }
+        }
+        echo json_encode($data);
+    }
+
+    public function get_all_number_change_details()
+    {
+        if(!$this->is_allowed($this->agent_report_roles)) { return $this->deny_json(); }
+        $data = array();
+        if($this->input->is_ajax_request())
+        {
+            $r = $this->Report_m->get_number_change_reports($this->current_role_id(), $this->current_emp_id());
+            if($r != FALSE)
+            {
+                $data["response"] = TRUE;
+                $data["message"] = count($r)." Record Found.";
+                $data["total_record"] = count($r);
+                $data["all_record"] = $r;
+            }
+            else
+            {
+                $data["response"] = FALSE;
+                $data["message"] = "No Record Found.";
+            }
+        }
+        echo json_encode($data);
+    }
+
+    public function add_name_change_details()
+    {
+        if(!$this->is_allowed($this->agent_report_roles)) { return $this->deny_json(); }
+        $data = array();
+        if ($this->input->post()) {
+            $agent_id = ($this->current_role_id() == 1) ? (int)$this->input->post('agent_id') : $this->current_emp_id();
+            $details = $this->Report_m->insert_name_change_report([
+                'date'             => $this->input->post('date'),
+                'phone_number'     => $this->input->post('phone_number'),
+                'complaint_number' => $this->input->post('complaint_number'),
+                'old_name'         => $this->input->post('old_name'),
+                'new_name'         => $this->input->post('new_name'),
+                'agent_id'         => $agent_id,
+                'remark'           => 'Needs to be updated',
+                'created_by'       => $this->current_emp_id()
+            ]);
+
+            if ($details > 0) {
+                $data["response"] = TRUE;
+                $data["message"]  = "Name change details added.";
+            } else {
+                $data["response"] = FALSE;
+                $data["message"]  = "Failed to add details.";
+            }
+        } else {
+            $data["response"] = FALSE;
+            $data["message"]  = "Invalid Request.";
+        }
+        echo json_encode($data);
+    }
+
+
+     public function add_details_of_no_same_resolutions()
+    {
+        if(!$this->is_allowed($this->add_roles)) { return $this->deny_json(); }
+        if ($this->input->post()) {
+
+            $details = $this->Report_m->insert_no_same_resolutions([
+                'date'        => $this->input->post('date'),
+                'agent_id' => $this->input->post('agent_id'),
+                'complaint_no' => $this->input->post('complaint_no'),
+                'department'      => $this->input->post('department'),
+                'district'       => $this->input->post('district'),
+                'issue'         => $this->input->post('issue'),
+                'complaint_status' => $this->normalize_complaint_status($this->input->post('complaint_status', TRUE)),
+                'added_by'    => $_SESSION["userdata"]["emp_id"]
+            ]);
+
+            if ($details > 0) {
+                $record = $this->Report_m->get_resolution_record('no_same_resolution_report', $details);
+                $this->add_resolution_history('no_same', $record, NULL, $record->complaint_status, 'create');
+
+                $data["response"] = true;
+                $data["message"]  = "Details Added.";
+
+            } else {
+
+                $data["response"] = false;
+                $data["message"]  = "Failed to add details.";
+            }
+
+            echo json_encode($data);
+            return;
+
+        } else {
+
+            $data["response"] = false;
+            $data["message"]  = "Invalid Request.";
+
+            echo json_encode($data);
+        }
+    }
+
+     public function add_details_of_copypaste_resolutions()
+    {
+        if(!$this->is_allowed($this->add_roles)) { return $this->deny_json(); }
+        if ($this->input->post()) {
+            
+            $details = $this->Report_m->insert_copypaste_resolutions([
+                'date'        => $this->input->post('date'),
+                'agent_id' => $this->input->post('agent_id'),
+                'complaint_no' => $this->input->post('complaint_no'),
+                'department'      => $this->input->post('department'),
+                'district'       => $this->input->post('district'),
+                'issue'         => $this->input->post('issue'),
+                'complaint_status' => $this->normalize_complaint_status($this->input->post('complaint_status', TRUE)),
+                'added_by'    => $_SESSION["userdata"]["emp_id"]
+            ]);
+            
+
+            if ($details > 0) {
+                $record = $this->Report_m->get_resolution_record('copy_paste_wrong_resolution_report', $details);
+                $this->add_resolution_history('copy_paste', $record, NULL, $record->complaint_status, 'create');
+
+                $data["response"] = true;
+                $data["message"]  = "Details Added.";
+
+            } else {
+
+                $data["response"] = false;
+                $data["message"]  = "Failed to add details.";
+            }
+
+            echo json_encode($data);
+            return;
+
+        } else {
+
+            $data["response"] = false;
+            $data["message"]  = "Invalid Request.";
+
+            echo json_encode($data);
+        }
+    }
+
+
+
+
+    
+
+public function add_details_of_direction_resolutions()
+    {
+        if(!$this->is_allowed($this->add_roles)) { return $this->deny_json(); }
+        if ($this->input->post()) {
+            
+            $details = $this->Report_m->insert_direction_resolutions([
+                'date'        => $this->input->post('date'),
+                'agent_id' => $this->input->post('agent_id'),
+                'complaint_no' => $this->input->post('complaint_no'),
+                'department'      => $this->input->post('department'),
+                'district'       => $this->input->post('district'),
+                'issue'         => $this->input->post('issue'),
+                'complaint_status' => $this->normalize_complaint_status($this->input->post('complaint_status', TRUE)),
+                'added_by'    => $_SESSION["userdata"]["emp_id"]
+            ]);
+            
+
+            if ($details > 0) {
+                $record = $this->Report_m->get_resolution_record('direction_report', $details);
+                $this->add_resolution_history('direction', $record, NULL, $record->complaint_status, 'create');
+
+                $data["response"] = true;
+                $data["message"]  = "Details Added.";
+
+            } else {
+
+                $data["response"] = false;
+                $data["message"]  = "Failed to add details.";
+            }
+
+            echo json_encode($data);
+            return;
+
+        } else {
+
+            $data["response"] = false;
+            $data["message"]  = "Invalid Request.";
+
+            echo json_encode($data);
+        }
+    }
+
+
+   
+
+   public function update_details_of_copypaste_resolutions()
+    {
+        if(!$this->is_allowed($this->update_roles)) { return $this->deny_json(); }
+        if ($this->input->post()) {
+            $id = (int)$this->input->post('hidden_id');
+            $old_record = $this->Report_m->get_resolution_record('copy_paste_wrong_resolution_report', $id);
+            
+            $details = $this->Report_m->update_copypaste_resolutions([
+                'call_date'         => $this->input->post('call_date'),
+                'helpdesk_remark'   => $this->input->post('helpdesk_remark'),
+                'remark'   => $this->input->post('other_remark'),
+                'complaint_status' => $this->normalize_complaint_status($this->input->post('complaint_status', TRUE)),
+                'officer_mobile_no' => $this->input->post('officer_mobile_no'),
+                'updated_by'        => $_SESSION["userdata"]["emp_id"],
+                'updated_at'        => date('Y-m-d H:i:s')
+            ], $id);
+            
+
+            if ($details > 0) {
+                $new_record = $this->Report_m->get_resolution_record('copy_paste_wrong_resolution_report', $id);
+                $this->add_resolution_history('copy_paste', $new_record, $old_record ? $old_record->complaint_status : NULL, $new_record->complaint_status, 'update');
+                $data["response"] = true;
+                $data["message"]  = "Details Updated.";
+
+            } else {
+
+                $data["response"] = false;
+                $data["message"]  = "Failed to Update details.";
+            }
+
+            echo json_encode($data);
+            return;
+
+        } else {
+
+            $data["response"] = false;
+            $data["message"]  = "Invalid Request.";
+
+            echo json_encode($data);
+        }
+    }
+
+    public function update_details_of_no_or_same_resolutions()
+    {
+        if(!$this->is_allowed($this->update_roles)) { return $this->deny_json(); }
+        if ($this->input->post()) {
+            $id = (int)$this->input->post('hidden_id');
+            $old_record = $this->Report_m->get_resolution_record('no_same_resolution_report', $id);
+           
+            $details = $this->Report_m->update_no_or_same_resolutions([
+                'call_date'         => $this->input->post('call_date'),
+                'helpdesk_remark'   => $this->input->post('helpdesk_remark'),
+                'remark'   => $this->input->post('other_remark'),
+                'complaint_status' => $this->normalize_complaint_status($this->input->post('complaint_status', TRUE)),
+                'officer_mobile_no' => $this->input->post('officer_mobile_no'),
+                'updated_by'        => $_SESSION["userdata"]["emp_id"],
+                'updated_at'        => date('Y-m-d H:i:s')
+            ], $id);
+            
+
+            if ($details > 0) {
+                $new_record = $this->Report_m->get_resolution_record('no_same_resolution_report', $id);
+                $this->add_resolution_history('no_same', $new_record, $old_record ? $old_record->complaint_status : NULL, $new_record->complaint_status, 'update');
+                $data["response"] = true;
+                $data["message"]  = "Details Updated.";
+
+            } else {
+
+                $data["response"] = false;
+                $data["message"]  = "Failed to Update details.";
+            }
+
+            echo json_encode($data);
+            return;
+
+        } else {
+
+            $data["response"] = false;
+            $data["message"]  = "Invalid Request.";
+
+            echo json_encode($data);
+        }
+    }
+
+    public function update_details_of_direction_resolutions()
+    {
+        if(!$this->is_allowed($this->update_roles)) { return $this->deny_json(); }
+        if ($this->input->post()) {
+            $id = (int)$this->input->post('hidden_id');
+            $old_record = $this->Report_m->get_resolution_record('direction_report', $id);
+            
+            $details = $this->Report_m->update_direction_resolutions([
+                'call_date'         => $this->input->post('call_date'),
+               'helpdesk_remark'   => $this->input->post('helpdesk_remark'),
+                'remark'   => $this->input->post('other_remark'),
+                'complaint_status' => $this->normalize_complaint_status($this->input->post('complaint_status', TRUE)),
+                'officer_mobile_no' => $this->input->post('officer_mobile_no'),
+                'updated_by'        => $_SESSION["userdata"]["emp_id"],
+                'updated_at'        => date('Y-m-d H:i:s')
+            ], $id);
+            
+
+            if ($details > 0) {
+                $new_record = $this->Report_m->get_resolution_record('direction_report', $id);
+                $this->add_resolution_history('direction', $new_record, $old_record ? $old_record->complaint_status : NULL, $new_record->complaint_status, 'update');
+                $data["response"] = true;
+                $data["message"]  = "Details Updated.";
+
+            } else {
+
+                $data["response"] = false;
+                $data["message"]  = "Failed to Update details.";
+            }
+
+            echo json_encode($data);
+            return;
+
+        } else {
+
+            $data["response"] = false;
+            $data["message"]  = "Invalid Request.";
+
+            echo json_encode($data);
+        }
+    }
+
+    public function update_resolution_complaint_status()
+    {
+        if(!$this->is_allowed($this->update_roles)) { return $this->deny_json(); }
+        $data = array();
+        if($this->input->post())
+        {
+            $report_key = $this->input->post('report_key', TRUE);
+            $id = (int)$this->input->post('record_id');
+            $new_status = $this->normalize_complaint_status($this->input->post('complaint_status', TRUE));
+            $meta = $this->resolution_report_meta($report_key);
+            if($meta == FALSE || $id <= 0)
+            {
+                $data["response"] = FALSE;
+                $data["message"] = "Invalid request.";
+                echo json_encode($data);
+                return;
+            }
+
+            $old_record = $this->Report_m->get_resolution_record($meta['table'], $id);
+            if($old_record == FALSE)
+            {
+                $data["response"] = FALSE;
+                $data["message"] = "Invalid record.";
+                echo json_encode($data);
+                return;
+            }
+
+            $update_method = $meta['update_method'];
+            $updated = $this->Report_m->$update_method(array(
+                'complaint_status' => $new_status,
+                'updated_by' => $this->current_emp_id(),
+                'updated_at' => date('Y-m-d H:i:s')
+            ), $id);
+
+            $new_record = $this->Report_m->get_resolution_record($meta['table'], $id);
+            $this->add_resolution_history($report_key, $new_record, $old_record->complaint_status, $new_status, 'status_popup');
+
+            $data["response"] = TRUE;
+            $data["message"] = ($updated > 0) ? "Complaint status updated." : "No status change detected.";
+        }
+        else
+        {
+            $data["response"] = FALSE;
+            $data["message"] = "Invalid Request.";
+        }
+        echo json_encode($data);
+    }
+
+    public function get_resolution_complaint_history()
+    {
+        if(!$this->is_allowed(array(1, 2, 3, 4))) { return $this->deny_json(); }
+        $data = array();
+        if($this->input->is_ajax_request())
+        {
+            $report_key = $this->input->post('report_key', TRUE);
+            $id = (int)$this->input->post('record_id');
+            $meta = $this->resolution_report_meta($report_key);
+            if($meta == FALSE || $id <= 0)
+            {
+                $data["response"] = FALSE;
+                $data["message"] = "Invalid request.";
+                echo json_encode($data);
+                return;
+            }
+
+            $record = $this->Report_m->get_resolution_record($meta['table'], $id);
+            if($record == FALSE)
+            {
+                $data["response"] = FALSE;
+                $data["message"] = "Invalid record.";
+                echo json_encode($data);
+                return;
+            }
+
+            $history = $this->Report_m->get_complaint_status_history($report_key, $id);
+            if($history != FALSE)
+            {
+                $data["response"] = TRUE;
+                $data["message"] = count($history)." history record(s) found.";
+                $data["total_record"] = count($history);
+                $data["all_record"] = $history;
+                $data["current_status"] = $record->complaint_status;
+                $data["complaint_no"] = $record->complaint_no;
+                $data["report_name"] = $meta['name'];
+            }
+            else
+            {
+                $data["response"] = FALSE;
+                $data["message"] = "No history found for this complaint.";
+                $data["current_status"] = $record->complaint_status;
+                $data["complaint_no"] = $record->complaint_no;
+                $data["report_name"] = $meta['name'];
+            }
+        }
+        echo json_encode($data);
+    }
+
+
+    public function add_owa_details()
+    {
+        if(!$this->is_allowed($this->add_roles)) { return $this->deny_json(); }
+        if ($this->input->post()) {
+
+            $details = $this->Report_m->insert_owa_details([
+                'date'        => $this->input->post('date'),
+                'agent_id' => $this->input->post('agent_id'),
+                'complaint_no' => $this->input->post('complaint_no'),
+                'new_department'      => $this->input->post('new_department'),
+                'old_department'      => $this->input->post('old_department'),
+                'new_attribute'      => $this->input->post('new_attribute'),
+                'old_attribute'      => $this->input->post('old_attribute'),
+                'owa_reason'       => $this->input->post('owa_reason'),
+                'sme_remark'       => $this->input->post('sme_remark'),
+                'other_owa_reason'         => $this->input->post('other_owa_reason'),
+                'other_agent'         => $this->input->post('other_agent'),
+                'added_by'    => $_SESSION["userdata"]["emp_id"]
+            ]);
+
+            if ($details > 0) {
+
+                $data["response"] = true;
+                $data["message"]  = "Details Added.";
+
+            } else {
+
+                $data["response"] = false;
+                $data["message"]  = "Failed to add details.";
+            }
+
+            echo json_encode($data);
+            return;
+
+        } else {
+
+            $data["response"] = false;
+            $data["message"]  = "Invalid Request.";
+
+            echo json_encode($data);
+        }
+    }
+
+    public function add_complaint_details()
+    {
+        // if(!$this->is_allowed($this->agent_report_roles)) { return $this->deny_json(); }
+        $data = array();
+        
+        if ($this->input->post()) {
+            $comp_type = $this->input->post('comp_type');
+            $agent_id = ($this->current_role_id() == 1) ? (int)$this->input->post('agent_id') : $this->current_emp_id();
+            if($comp_type == "1")
+            {
+                if ($this->Report_m->check_duplicate($this->input->post('complaint_no'),'complaint_creation') > 0) { 
+                    $data["response"] = FALSE;
+                    $data["message"]  = "Complaint Number Already exist.";
+                }else{
+                    $details = $this->Report_m->insert_complaint_details([
+                    'comp_id' => $this->input->post('complaint_no'),
+                    'department'         => $this->input->post('department'),
+                    'attribute'         => $this->input->post('attribute'),
+                    'added_by'       => $this->current_emp_id()
+                    ]);
+                    if ($details > 0) {
+                        $data["response"] = TRUE;
+                        $data["message"]  = "Detail Add Successfully.";
+                    } else {
+                        $data["response"] = FALSE;
+                        $data["message"]  = "Failed to add details.";
+                    }
+                }
+                
+            }
+            else
+            {   
+                if ($this->Report_m->check_duplicate($this->input->post('complaint_no'),'demand_suggestion_creation') > 0) { 
+                    $data["response"] = FALSE;
+                    $data["message"]  = "Complaint Number Already exist.";
+                }else{
+                    $details = $this->Report_m->insert_demandsuggestion_complaint_details([
+                        'comp_type' => $this->input->post('comp_type'),
+                        'comp_id' => $this->input->post('complaint_no'),
+                        'department'         => $this->input->post('department'),
+                        'attribute'         => $this->input->post('attribute'),
+                        'added_by'       => $this->current_emp_id()
+                    ]);
+                    if ($details > 0) {
+                        $data["response"] = TRUE;
+                        $data["message"]  = "Detail Add Successfully.";
+                    } else {
+                        $data["response"] = FALSE;
+                        $data["message"]  = "Failed to add details.";
+                    }
+                }
+                
+            }
+        } else {
+            $data["response"] = FALSE;
+            $data["message"]  = "Invalid Request.";
+        }
+        echo json_encode($data);
+    }
+
+    public function add_high_complaint_details()
+    {
+        // if(!$this->is_allowed($this->agent_report_roles)) { return $this->deny_json(); }
+        $data = array();
+        if ($this->input->post()) {
+            $agent_id = ($this->current_role_id() == 1) ? (int)$this->input->post('agent_id') : $this->current_emp_id();
+            $details = $this->Report_m->insert_high_complaint_details([
+                'comp_id' => $this->input->post('other_complaint_no'),
+                'type' => $this->input->post('type'),
+                'added_by'       => $this->current_emp_id()
+            ]);
+
+            if ($details > 0) {
+                $data["response"] = TRUE;
+                $data["message"]  = "Hight rated Complaint details added.";
+            } else {
+                $data["response"] = FALSE;
+                $data["message"]  = "Failed to add details.";
+            }
+        } else {
+            $data["response"] = FALSE;
+            $data["message"]  = "Invalid Request.";
+        }
+        echo json_encode($data);
+    }
+
+    public function get_all_complaints()
+    {
+        // if(!$this->is_allowed($this->agent_report_roles)) { return $this->deny_json(); }
+        $data = array();
+        if($this->input->is_ajax_request())
+        {
+            $from_date = $this->input->post("from_date");
+            $to_date   = $this->input->post("to_date");
+           
+           $r = $this->Report_m->get_all_complaints($this->current_role_id(),
+                $this->current_emp_id(),
+                $from_date,
+                $to_date
+            );
+            
+            if($r != FALSE)
+            {
+                $data["response"] = TRUE;
+                $data["message"] = count($r)." Record Found.";
+                $data["total_record"] = count($r);
+                $data["all_record"] = $r;
+            }
+            else
+            {
+                $data["response"] = FALSE;
+                $data["message"] = "No Record Found.";
+            }
+        }
+        echo json_encode($data);
+    }
+
+    public function update_name_change_detail()
+    {
+        if(!$this->is_allowed($this->update_roles)) { return $this->deny_json(); }
+        if ($this->input->post()) {
+            $details = $this->Report_m->update_name_change_detail([
+                'remark' => 'DONE',
+                'updated_by'        => $_SESSION["userdata"]["emp_id"],
+                'updated_at'        => date('Y-m-d H:i:s')
+            ], $this->input->post('id'));
+            
+
+            if ($details > 0) {
+                $data["response"] = true;
+                $data["message"]  = "Details Updated.";
+
+            } else {
+
+                $data["response"] = false;
+                $data["message"]  = "Failed to Update details.";
+            }
+
+            echo json_encode($data);
+            return;
+
+        } else {
+
+            $data["response"] = false;
+            $data["message"]  = "Invalid Request.";
+
+            echo json_encode($data);
+        }
+    }
+
+    public function update_number_change_detail()
+    {
+        if(!$this->is_allowed($this->update_roles)) { return $this->deny_json(); }
+        if ($this->input->post()) {
+            $details = $this->Report_m->update_number_change_detail([
+                'updated_by'        => $_SESSION["userdata"]["emp_id"],
+                'updated_at'        => date('Y-m-d H:i:s')
+            ], $this->input->post('id'));
+            
+
+            if ($details > 0) {
+                $data["response"] = true;
+                $data["message"]  = "Details Updated.";
+
+            } else {
+
+                $data["response"] = false;
+                $data["message"]  = "Failed to Update details.";
+            }
+
+            echo json_encode($data);
+            return;
+
+        } else {
+
+            $data["response"] = false;
+            $data["message"]  = "Invalid Request.";
+
+            echo json_encode($data);
+        }
+    }
+
+    public function RemarkFormats($page = "list"){
+        $data = array();
+		if(!file_exists(APPPATH.'views/reports/RemarkFormats/'.$page.'.php'))
+		{
+		show_404();
+		}
+		$data["title"] = "Remark Formats";
+		$this->load->view('app/templates/header' , $data);
+		$this->load->view('app/templates/side_panel' , $data);
+		$this->load->view('reports/RemarkFormats/'.$page , $data);
+		$this->load->view('app/templates/footer' , $data);
+    }
+
+    private function normalize_text_color($color, $default)
+    {
+        $color = trim((string)$color);
+        return preg_match('/^#[0-9a-fA-F]{6}$/', $color) ? strtoupper($color) : $default;
+    }
+
+    private function validate_remark_format_payload($title, $subtitle, $remark_content, $title_color, $subtitle_color)
+    {
+        if(trim($title) == "")
+        {
+            return "Enter title.";
+        }
+        if(strlen(trim($title)) > 150)
+        {
+            return "Title cannot exceed 150 characters.";
+        }
+        if(trim($subtitle) == "")
+        {
+            return "Enter subtitle.";
+        }
+        if(strlen(trim($subtitle)) > 200)
+        {
+            return "Subtitle cannot exceed 200 characters.";
+        }
+        $readable_content = trim(preg_replace('/\s+/', ' ', str_replace("\xc2\xa0", ' ', html_entity_decode(strip_tags((string)$remark_content), ENT_QUOTES, 'UTF-8'))));
+        if($readable_content == "")
+        {
+            return "Enter description.";
+        }
+        if(!preg_match('/^#[0-9a-fA-F]{6}$/', $title_color))
+        {
+            return "Select a valid title color.";
+        }
+        if(!preg_match('/^#[0-9a-fA-F]{6}$/', $subtitle_color))
+        {
+            return "Select a valid subtitle color.";
+        }
+        return "";
+    }
+
+    public function get_all_remark_formats()
+    {
+        $data = array();
+        if($this->input->is_ajax_request())
+        {
+            $r = $this->Report_m->get_remark_formats($this->current_emp_id(),$this->current_role_id());
+            if($r != FALSE)
+            {
+                $data["response"] = TRUE;
+                $data["message"] = count($r)." Record Found.";
+                $data["total_record"] = count($r);
+                $data["all_record"] = $r;
+            }
+            else
+            {
+                $data["response"] = FALSE;
+                $data["message"] = "No saved remark formats found.";
+            }
+        }
+        echo json_encode($data);
+    }
+
+    public function add_remark_format()
+    {
+        $data = array();
+        if ($this->input->post()) {
+            $title = $this->input->post('title', TRUE);
+            $subtitle = $this->input->post('subtitle', TRUE);
+            $remark_content = $this->input->post('remark_content');
+            $title_color = $this->normalize_text_color($this->input->post('title_color', TRUE), '#212529');
+            $subtitle_color = $this->normalize_text_color($this->input->post('subtitle_color', TRUE), '#6C757D');
+            $validation_message = $this->validate_remark_format_payload($title, $subtitle, $remark_content, $title_color, $subtitle_color);
+            if($validation_message != "")
+            {
+                $data["response"] = FALSE;
+                $data["message"] = $validation_message;
+                echo json_encode($data);
+                return;
+            }
+
+            $details = $this->Report_m->insert_remark_format([
+                'title'          => trim($title),
+                'subtitle'       => trim($subtitle),
+                'remark_content' => $remark_content,
+                'title_color'    => $title_color,
+                'subtitle_color' => $subtitle_color,
+                'created_by'     => $this->current_emp_id()
+            ]);
+
+            if ($details > 0) {
+                $data["response"] = TRUE;
+                $data["message"]  = "Remark format saved.";
+            } else {
+                $data["response"] = FALSE;
+                $data["message"]  = "Failed to save remark format.";
+            }
+        } else {
+            $data["response"] = FALSE;
+            $data["message"]  = "Invalid Request.";
+        }
+        echo json_encode($data);
+    }
+
+    public function update_remark_format()
+    {
+        $data = array();
+        if ($this->input->post()) {
+            $id = (int)$this->input->post('hidden_id');
+            $record = $this->Report_m->get_remark_format_by_id($id, $this->current_emp_id());
+            if($record == FALSE)
+            {
+                $data["response"] = FALSE;
+                $data["message"] = "Invalid remark format.";
+                echo json_encode($data);
+                return;
+            }
+
+            $title = $this->input->post('title', TRUE);
+            $subtitle = $this->input->post('subtitle', TRUE);
+            $remark_content = $this->input->post('remark_content');
+            $title_color = $this->normalize_text_color($this->input->post('title_color', TRUE), '#212529');
+            $subtitle_color = $this->normalize_text_color($this->input->post('subtitle_color', TRUE), '#6C757D');
+            $validation_message = $this->validate_remark_format_payload($title, $subtitle, $remark_content, $title_color, $subtitle_color);
+            if($validation_message != "")
+            {
+                $data["response"] = FALSE;
+                $data["message"] = $validation_message;
+                echo json_encode($data);
+                return;
+            }
+
+            $updated = $this->Report_m->update_remark_format($id, $this->current_emp_id(), [
+                'title'          => trim($title),
+                'subtitle'       => trim($subtitle),
+                'remark_content' => $remark_content,
+                'title_color'    => $title_color,
+                'subtitle_color' => $subtitle_color,
+                'updated_by'     => $this->current_emp_id(),
+                'updated_at'     => date('Y-m-d H:i:s')
+            ]);
+
+            $data["response"] = TRUE;
+            $data["message"] = ($updated > 0) ? "Remark format updated." : "No changes detected.";
+        } else {
+            $data["response"] = FALSE;
+            $data["message"] = "Invalid Request.";
+        }
+        echo json_encode($data);
+    }
+
+    public function delete_remark_format()
+    {
+        $data = array();
+        if ($this->input->post()) {
+            $id = (int)$this->input->post('id');
+            $record = $this->Report_m->get_remark_format_by_id($id, $this->current_emp_id());
+            if($record == FALSE)
+            {
+                $data["response"] = FALSE;
+                $data["message"] = "Invalid remark format.";
+                echo json_encode($data);
+                return;
+            }
+
+            $deleted = $this->Report_m->update_remark_format($id, $this->current_emp_id(), [
+                'status'     => 0,
+                'deleted_by' => $this->current_emp_id(),
+                'deleted_at' => date('Y-m-d H:i:s')
+            ]);
+
+            $data["response"] = ($deleted > 0);
+            $data["message"] = ($deleted > 0) ? "Remark format deleted." : "Failed to delete remark format.";
+        } else {
+            $data["response"] = FALSE;
+            $data["message"] = "Invalid Request.";
+        }
+        echo json_encode($data);
+    }
+
+    public function get_attribute()
+    {
+        $data = array();
+        if($this->input->is_ajax_request())
+        {
+            $department = (int)$this->input->post('department');
+            $r = $this->Report_m->get_attribute($department);
+            if($r != FALSE)
+            {
+                $data["response"] = TRUE;
+                $data["message"] = count($r)." Record Found.";
+                $data["total_record"] = count($r);
+                $data["all_record"] = $r;
+            }
+            else
+            {
+                $data["response"] = FALSE;
+                $data["message"] = "No saved remark formats found.";
+            }
+        }
+        echo json_encode($data);
+    }
+
+    public function get_other_related_complaints()
+    {
+        // if(!$this->is_allowed($this->agent_report_roles)) { return $this->deny_json(); }
+        $data = array();
+        if($this->input->is_ajax_request())
+        {
+            $from_date = $this->input->post("from_date");
+            $to_date   = $this->input->post("to_date");
+           
+           $r = $this->Report_m->get_other_related_complaints($this->current_role_id(),
+                $this->current_emp_id()
+            );
+            
+            if($r != FALSE)
+            {
+                $data["response"] = TRUE;
+                $data["message"] = count($r)." Record Found.";
+                $data["total_record"] = count($r);
+                $data["all_record"] = $r;
+            }
+            else
+            {
+                $data["response"] = FALSE;
+                $data["message"] = "No Record Found.";
+            }
+        }
+        echo json_encode($data);
+    }
+
+    public function DisasterReport($page = "list"){
+        $this->require_agent_report_access();
+        $data = array();
+		if(!file_exists(APPPATH.'views/reports/DisasterReport/'.$page.'.php'))
+		{
+		show_404();
+		}
+        $data["user_list"] = $this->Report_m->get_all_user_list();
+        $data["district_list"] = $this->Report_m->get_all_districts();
+		$data["title"] = "Disaster Report";
+		$this->load->view('app/templates/header' , $data);
+		$this->load->view('app/templates/side_panel' , $data);
+		$this->load->view('reports/DisasterReport/'.$page , $data);
+		$this->load->view('app/templates/footer' , $data);
+    }
+
+    public function add_disaster_details()
+    {
+        // if(!$this->is_allowed($this->agent_report_roles)) { return $this->deny_json(); }
+        $data = array();
+        if ($this->input->post()) {
+            
+            $details = $this->Report_m->insert_disaster_details([
+                'date' => $this->input->post('date'),
+                'case_no'         => $this->input->post('case_no'),
+                'sub_situation' => $this->input->post('sub_situation'),
+                'citizen_name'  => $this->input->post('citizen_name'),
+                'citizen_mobile_no' => $this->input->post('citizen_mobile_no'),
+                'district'         => $this->input->post('district'),
+                'case_remark'         => $this->input->post('case_remark'),
+                'other_remark'         => $this->input->post('other_remark'),
+                'added_by'       => $this->input->post('agent_id'),
+                'added_at'       => date('Y-m-d H:i:s'),
+                
+            ]);
+
+            if ($details > 0) {
+                $data["response"] = TRUE;
+                $data["message"]  = "Case details added.";
+            } else {
+                $data["response"] = FALSE;
+                $data["message"]  = "Failed to add details.";
+            }
+        } else {
+            $data["response"] = FALSE;
+            $data["message"]  = "Invalid Request.";
+        }
+        echo json_encode($data);
+    }
+
+        public function get_all_disasters_details()
+    {
+        // if(!$this->is_allowed($this->agent_report_roles)) { return $this->deny_json(); }
+        $data = array();
+        if($this->input->is_ajax_request())
+        {
+            $from_date = $this->input->post("from_date");
+            $to_date   = $this->input->post("to_date");
+           
+           $r = $this->Report_m->get_all_disasters_details();
+            
+            if($r != FALSE)
+            {
+                $data["response"] = TRUE;
+                $data["message"] = count($r)." Record Found.";
+                $data["total_record"] = count($r);
+                $data["all_record"] = $r;
+            }
+            else
+            {
+                $data["response"] = FALSE;
+                $data["message"] = "No Record Found.";
+            }
+        }
+        echo json_encode($data);
+    }
+
+    private function clean_contact_numbers($numbers)
+    {
+        if(!is_array($numbers))
+        {
+            $numbers = explode(",", (string)$numbers);
+        }
+
+        $clean = array();
+        foreach($numbers as $number)
+        {
+            $number = trim($number);
+            if($number !== "")
+            {
+                $clean[] = $number;
+            }
+        }
+
+        return implode(", ", $clean);
+    }
+
+    public function get_all_isat_number_deocs()
+    {
+        $data = array();
+        if($this->input->is_ajax_request())
+        {
+            $r = $this->Report_m->get_all_isat_number_deocs();
+            if($r != FALSE)
+            {
+                $data["response"] = TRUE;
+                $data["message"] = count($r)." Record Found.";
+                $data["total_record"] = count($r);
+                $data["all_record"] = $r;
+            }
+            else
+            {
+                $data["response"] = FALSE;
+                $data["message"] = "No Record Found.";
+            }
+        }
+        else
+        {
+            $data["response"] = FALSE;
+            $data["message"] = "Invalid Request.";
+        }
+        echo json_encode($data);
+    }
+
+    public function save_isat_number_deocs()
+    {
+        $data = array();
+        if($this->input->is_ajax_request() && $this->input->post())
+        {
+            $id = (int)$this->input->post("id");
+            $save_data = array(
+                "district_officer" => trim($this->input->post("district_officer")),
+                "mobile_number"    => trim($this->input->post("mobile_number")),
+                "other_number"     => trim($this->input->post("other_number"))
+            );
+
+            if($save_data["district_officer"] == "" || $save_data["mobile_number"] == "")
+            {
+                echo json_encode(array("response" => FALSE, "message" => "District Officer and Mobile Number are required."));
+                return;
+            }
+
+            if($id > 0)
+            {
+                $save_data["update_by"] = $this->current_emp_id();
+                $save_data["updated_at"] = date("Y-m-d H:i:s");
+                $saved = $this->Report_m->update_isat_number_deocs($id, $save_data);
+                $data["response"] = ($saved >= 0);
+                $data["message"] = ($saved >= 0) ? "ISAT/DEOC number updated." : "Failed to update ISAT/DEOC number.";
+            }
+            else
+            {
+                $save_data["added_by"] = $this->current_emp_id();
+                $save_data["added_at"] = date("Y-m-d H:i:s");
+                $saved = $this->Report_m->insert_isat_number_deocs($save_data);
+                $data["response"] = ($saved > 0);
+                $data["message"] = ($saved > 0) ? "ISAT/DEOC number added." : "Failed to add ISAT/DEOC number.";
+            }
+        }
+        else
+        {
+            $data["response"] = FALSE;
+            $data["message"] = "Invalid Request.";
+        }
+        echo json_encode($data);
+    }
+
+    public function delete_isat_number_deocs()
+    {
+        $data = array();
+        if($this->input->is_ajax_request() && $this->input->post("id"))
+        {
+            $deleted = $this->Report_m->delete_isat_number_deocs((int)$this->input->post("id"), array(
+                "status" => 0,
+                "update_by" => $this->current_emp_id(),
+                "updated_at" => date("Y-m-d H:i:s")
+            ));
+            $data["response"] = ($deleted > 0);
+            $data["message"] = ($deleted > 0) ? "ISAT/DEOC number deleted." : "Failed to delete ISAT/DEOC number.";
+        }
+        else
+        {
+            $data["response"] = FALSE;
+            $data["message"] = "Invalid Request.";
+        }
+        echo json_encode($data);
+    }
+
+    public function get_all_deocs_numbers()
+    {
+        $data = array();
+        if($this->input->is_ajax_request())
+        {
+            $r = $this->Report_m->get_all_deocs_numbers();
+            if($r != FALSE)
+            {
+                $data["response"] = TRUE;
+                $data["message"] = count($r)." Record Found.";
+                $data["total_record"] = count($r);
+                $data["all_record"] = $r;
+            }
+            else
+            {
+                $data["response"] = FALSE;
+                $data["message"] = "No Record Found.";
+            }
+        }
+        else
+        {
+            $data["response"] = FALSE;
+            $data["message"] = "Invalid Request.";
+        }
+        echo json_encode($data);
+    }
+
+    public function save_deocs_numbers()
+    {
+        $data = array();
+        if($this->input->is_ajax_request() && $this->input->post())
+        {
+            $id = (int)$this->input->post("id");
+            $save_data = array(
+                "eocs_name"        => trim($this->input->post("eocs_name")),
+                "incharge_name"    => trim($this->input->post("incharge_name")),
+                "incharge_mobile"  => trim($this->input->post("incharge_mobile")),
+                "other_numbers"    => $this->clean_contact_numbers($this->input->post("other_numbers")),
+                "toll_free_no"     => trim($this->input->post("toll_free_no"))
+            );
+
+            if($save_data["eocs_name"] == "" || $save_data["incharge_name"] == "" || $save_data["incharge_mobile"] == "" || $save_data["other_numbers"] == "" || $save_data["toll_free_no"] == "")
+            {
+                echo json_encode(array("response" => FALSE, "message" => "All DEOC number fields are required."));
+                return;
+            }
+
+            if($id > 0)
+            {
+                $save_data["updated_by"] = $this->current_emp_id();
+                $save_data["updated_at"] = date("Y-m-d H:i:s");
+                $saved = $this->Report_m->update_deocs_numbers($id, $save_data);
+                $data["response"] = ($saved >= 0);
+                $data["message"] = ($saved >= 0) ? "DEOC number updated." : "Failed to update DEOC number.";
+            }
+            else
+            {
+                $save_data["added_by"] = $this->current_emp_id();
+                $save_data["added_at"] = date("Y-m-d H:i:s");
+                $saved = $this->Report_m->insert_deocs_numbers($save_data);
+                $data["response"] = ($saved > 0);
+                $data["message"] = ($saved > 0) ? "DEOC number added." : "Failed to add DEOC number.";
+            }
+        }
+        else
+        {
+            $data["response"] = FALSE;
+            $data["message"] = "Invalid Request.";
+        }
+        echo json_encode($data);
+    }
+
+    public function delete_deocs_numbers()
+    {
+        $data = array();
+        if($this->input->is_ajax_request() && $this->input->post("id"))
+        {
+            $deleted = $this->Report_m->delete_deocs_numbers((int)$this->input->post("id"), array(
+                "status" => 0,
+                "updated_by" => $this->current_emp_id(),
+                "updated_at" => date("Y-m-d H:i:s")
+            ));
+            $data["response"] = ($deleted > 0);
+            $data["message"] = ($deleted > 0) ? "DEOC number deleted." : "Failed to delete DEOC number.";
+        }
+        else
+        {
+            $data["response"] = FALSE;
+            $data["message"] = "Invalid Request.";
+        }
+        echo json_encode($data);
+    }
+
+    public function PotralIssueReport($page = "list"){
+        $this->require_agent_report_access();
+        $data = array();
+		if(!file_exists(APPPATH.'views/reports/PotralIssueReport/'.$page.'.php'))
+		{
+		show_404();
+		}
+        $data["user_list"] = $this->Report_m->get_all_user_list();
+        $data["district_list"] = $this->Report_m->get_all_districts();
+		$data["title"] = "Portal Issues Report";
+		$this->load->view('app/templates/header' , $data);
+		$this->load->view('app/templates/side_panel' , $data);
+		$this->load->view('reports/PotralIssueReport/'.$page , $data);
+		$this->load->view('app/templates/footer' , $data);
+    }
+
+    public function get_all_portal_issue_details()
+    {
+        $data = array();
+        if($this->input->is_ajax_request())
+        {
+            $r = $this->Report_m->get_all_portal_issue_details();
+            if($r != FALSE)
+            {
+                $data["response"] = TRUE;
+                $data["message"] = count($r)." Record Found.";
+                $data["total_record"] = count($r);
+                $data["all_record"] = $r;
+            }
+            else
+            {
+                $data["response"] = FALSE;
+                $data["message"] = "No Record Found.";
+            }
+        }
+        else
+        {
+            $data["response"] = FALSE;
+            $data["message"] = "Invalid Request.";
+        }
+        echo json_encode($data);
+    }
+
+    public function add_portal_issue_details()
+    {
+        // if(!$this->is_allowed($this->agent_report_roles)) { return $this->deny_json(); }
+        $data = array();
+        if ($this->input->post()) {
+            
+            $details = $this->Report_m->insert_portal_issue_details([
+                'date' => $this->input->post('date'),
+                'case_reason'         => $this->input->post('case_reason'),
+                'reason_case_not_registered' => $this->input->post('reason_case_not_registered'),
+                'other_remark'         => $this->input->post('other_remark'),
+                'added_by'       => $this->input->post('agent_id'),
+                'added_at'       => date('Y-m-d H:i:s'),
+            ]);
+
+            if ($details > 0) {
+                $data["response"] = TRUE;
+                $data["message"]  = "Case details added.";
+            } else {
+                $data["response"] = FALSE;
+                $data["message"]  = "Failed to add details.";
+            }
+        } else {
+            $data["response"] = FALSE;
+            $data["message"]  = "Invalid Request.";
+        }
+        echo json_encode($data);
+    }
+    
+    public function update_portal_issue_details()
+    {
+        
+        if ($this->input->post()) {
+            
+            $details = $this->Report_m->insert_portal_issue_followup([
+                'case_id'         => $this->input->post('update_id'),
+                'follow_up_remark'         => $this->input->post('follow_up_remark'),
+                'added_by' => $this->input->post('follow_up_agent_id')
+            ]);
+            
+
+            if ($details > 0) {
+                $this->Report_m->update_portal_issue_details([
+                    'updated_by' => $this->input->post('follow_up_agent_id'),
+                    'updated_at' => date('Y-m-d H:i:s')
+                ], $this->input->post('update_id'));
+
+                $data["response"] = true;
+                $data["message"]  = "Details Updated.";
+
+            } else {
+
+                $data["response"] = false;
+                $data["message"]  = "Failed to Update details.";
+            }
+
+            echo json_encode($data);
+            return;
+
+        } else {
+
+            $data["response"] = false;
+            $data["message"]  = "Invalid Request.";
+
+            echo json_encode($data);
+        }
+    }
+
+    public function get_portal_issue_history()
+    {
+        $data = array();
+        if($this->input->is_ajax_request() && $this->input->post("id"))
+        {
+            $id = (int)$this->input->post("id");
+            $r = $this->Report_m->get_portal_issue_history($id);
+            if($r != FALSE)
+            {
+                $data["response"] = TRUE;
+                $data["message"] = count($r)." Record Found.";
+                $data["total_record"] = count($r);
+                $data["all_record"] = $r;
+            }
+            else
+            {
+                $data["response"] = FALSE;
+                $data["message"] = "No Record Found.";
+            }
+        }
+        else
+        {
+            $data["response"] = FALSE;
+            $data["message"] = "Invalid Request.";
+        }
+        echo json_encode($data);
+
+    }
+
+    public function get_owa_details_by_id()
+    {
+        $data = array();
+        if($this->input->is_ajax_request())
+        {
+            $id = $this->input->post("owa_id");
+
+            $r = $this->Report_m->get_owa_details_by_id($id);
+            if($r != FALSE)
+            {
+                $data["response"] = TRUE;
+                $data["message"] = count($r)." Record Found.";
+                $data["total_record"] = count($r);
+                $data["all_record"] = $r;
+            }
+            else
+            {
+                $data["response"] = FALSE;
+                $data["message"] = "No Record Found.";
+            }
+        }
+        echo json_encode($data);
+    }
+
+    public function update_sme_remark()
+    {
+        //if(!$this->is_allowed($this->update_roles)) { return $this->deny_json(); }
+        if ($this->input->post()) {
+            $details = $this->Report_m->update_owa_details([
+                'sme_remark' => $this->input->post('sme_remark'),
+                'updated_by' => $this->current_emp_id(),
+                'updated_at' => date('Y-m-d H:i:s')
+            ], $this->input->post('id'));
+            
+
+            if ($details > 0) {
+                $data["response"] = true;
+                $data["message"]  = "SME Remark Updated.";
+
+            } else {
+
+                $data["response"] = false;
+                $data["message"]  = "Failed to Update SME Remark.";
+            }
+
+            echo json_encode($data);
+            return;
+
+        } else {
+
+            $data["response"] = false;
+            $data["message"]  = "Invalid Request.";
+
+            echo json_encode($data);
+        }
+    }
+
+    public function get_demand_suggestion_details()
+    {
+        // if(!$this->is_allowed($this->agent_report_roles)) { return $this->deny_json(); }
+        $data = array();
+        if($this->input->is_ajax_request())
+        {
+            $from_date = $this->input->post("from_date");
+            $to_date   = $this->input->post("to_date");
+           
+           $r = $this->Report_m->get_demand_suggestion_details($this->current_role_id(),
+                $this->current_emp_id(),
+                $from_date,
+                $to_date
+            );
+            
+            if($r != FALSE)
+            {
+                $data["response"] = TRUE;
+                $data["message"] = count($r)." Record Found.";
+                $data["total_record"] = count($r);
+                $data["all_record"] = $r;
+            }
+            else
+            {
+                $data["response"] = FALSE;
+                $data["message"] = "No Record Found.";
+            }
+        }
+        echo json_encode($data);
+    }
+
+    public function add_number_change_request(){
+        $data = array();
+        if ($this->input->post()) {
+            $details = $this->Report_m->insert_number_change_request([
+                'oldPhone' => $this->input->post('old_phone_number'),
+                'newPhone' => $this->input->post('new_phone_number'),
+                'complaint_no' => $this->input->post('other_complaint_no'),
+                'added_by' => $this->current_emp_id(),
+                'added_at' => date('Y-m-d H:i:s')
+            ]);
+            if ($details > 0) {
+                $data["response"] = TRUE;
+                $data["message"]  = "Number change request added.";
+            } else {
+                $data["response"] = FALSE;
+                $data["message"]  = "Failed to add number change request.";
+            }
+        } else {
+            $data["response"] = FALSE;
+            $data["message"]  = "Invalid Request.";
+        }
+        echo json_encode($data);
+    }
+
+}

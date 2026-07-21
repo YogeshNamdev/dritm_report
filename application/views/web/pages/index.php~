@@ -1,0 +1,705 @@
+
+    <div class="scrollToTop"><i class="fa fa-angle-up"></i></div>
+    <div class="overlay"></div>
+    <div class="overlayTwo"></div>
+    <section class="banner-section bg_img style-2 oh d-none d-lg-block" data-background="<?php echo base_url(); ?>web_components/images/banner22.jpg">
+       <div class="top-shape-content d-none d-lg-none">
+            <img src="<?php echo base_url(); ?>web_components/images/banner04.png" width="100%" alt="banner">
+        </div> 
+        <div class="container-fluid container-fluid1 counter-section1 ">
+            <div class="">
+			<div class="row">
+			  <div class="col-lg-7">
+                <div class="banner-content style-2 w-100">
+                    <h1 class="title white-text">Live & Interactive Classes <br>with India's Best Teachers</h1>
+					   <p class="black-text pd-14">We master your child's concepts<br><strong>Nursery to Grade 3 </strong><br>CBSE ICSE State Boards</p>
+			<div class="row">
+			  <div class="col-lg-4">
+				<h3>2200+</h3>
+					<p class="black-text">Happy Learners</p>
+			  </div>
+					<div class="col-lg-8 pdtsmall-20">
+					   <h3>1,11000+</h3>
+					      <p class="black-text">Hours of Live Learning</p>
+					</div>
+					 </div>
+					<br>
+                    <a href="#" class="custom-button"><span> BOOK A FREE TRIAL </span></a>
+                </div>
+				</div>
+				<div class="col-lg-5">
+                <div class="">
+				
+				<div class="video_photo call_bg_1">
+				
+               <div class="video_icon">
+               <h3 class="white-text fs-35">Learn&nbsp &nbsp  Create&nbsp &nbsp  Connect</h3>
+               <iframe width="100%" height="315" class="bdr-radius-ctrl" src="https://www.youtube.com/embed/80mj2wKSDU4" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+               </div>
+                </div>
+				  </div>
+			 </div>
+			</div>
+			</div>
+			 <div class="row tc mrgt70">
+			<div class="col-lg-12">
+			
+			<h3 class="white-text">Little Rabbit's Blueprint of Education<br> is different, & here's how!</h3>
+			</div>
+			</div> 
+        </div>
+    </section> 
+	
+	<section class="banner-section bg_img style-2 oh d-block d-lg-none" data-background="images/banner22.jpg">
+       
+        <div class="container-fluid container-fluid1 counter-section1 ">
+            
+			<div class="row text-center">
+			<div class="col-lg-12 col-12">
+                <div class="banner-content style-2 w-100">
+                   
+                    <h1 class="title white-text">Live & Interactive Classes <br>with India's Best Teachers</h1>
+					
+                     <p class="black-text pd-14">We master your child's concepts<br><strong>Nursery to Grade 3 </strong><br>CBSE ICSE State Boards</p>
+					  
+					    <div class="">
+				
+				<div class="video_photo call_bg_1">
+				
+               <div class="video_icon">
+               
+               <iframe width="100%" height="180" class="bdr-radius-ctrl" src="https://www.youtube.com/embed/80mj2wKSDU4" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+               </div>
+                </div>
+				  </div>
+                </div>
+				</div>
+				 </div>
+             <div class="row text-center">
+					<div class="col-lg-6 col-6  mrgt40">
+					<h3>2200+</h3>
+					<p class="black-text fs-13">Happy Learners</p>
+					</div>
+					<div class="col-lg-6 col-6  mrgt40">
+					<h3>1,11000+</h3>
+					<p class="black-text fs-13">Hours of Live Learning</p>
+					</div>
+					 </div>
+					
+					<div class="row text-center">
+					<div class="col-lg-12 col-12">
+					<br>
+                    <a href="#" class="custom-button"><span>Book a Free trial </span></a>
+					</div>
+					 </div>
+				 <div class="row text-center mrgt70">
+			<div class="col-lg-12">
+			
+			<h3 class="white-text">Little Rabbit's Blueprint of Education<br> is different, & here's how!</h3>
+			</div>
+			</div> <br>
+        </div>
+    </section>
+    
+<section id="white-bg">
+	<div class="container">
+	 
+	<div class="row">
+	 <div class="col-lg-12">
+<div class="tile" id="tile-1">
+   <ul class="nav nav-tabs nav-justified" role="tablist">
+    <div class="slider"></div>
+      
+      <li class="nav-item">
+        <a class="nav-link  active d-none d-lg-block" id="a-slide-1" onclick="clearInterval(myInterval);" data-toggle="tab" href="#slide-1" role="tab" aria-controls="slide-1" aria-selected="false"> India's<br> Best Teachers</a>
+		
+		<a class="nav-link  active d-block d-lg-none" id="a-slide-1" onclick="clearInterval(myInterval);" data-toggle="tab" href="#slide-1" role="tab" aria-controls="slide-1" aria-selected="false"> India's <br>Best Teachers</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link d-none d-lg-block" id="a-slide-2" onclick="clearInterval(myInterval);" data-toggle="tab" href="#slide-2" role="tab" aria-controls="slide-2" aria-selected="false"> Personal<br> Attention</a>
+		
+		<a class="nav-link d-block d-lg-none" id="a-slide-2" onclick="clearInterval(myInterval);" data-toggle="tab" href="#slide-2" role="tab" aria-controls="slide-2" aria-selected="false"> Personal<br> Attention</a>
+      </li>
+	  <li class="nav-item">
+        <a class="nav-link  d-none d-lg-block" id="a-slide-3" onclick="clearInterval(myInterval);" data-toggle="tab" href="#slide-3" role="tab" aria-controls="slide-3" aria-selected="true"> Concept Based Learning  </a>
+		
+		<a class="nav-link d-block d-lg-none" id="a-slide-3 " onclick="clearInterval(myInterval);" data-toggle="tab" href="#slide-3" role="tab" aria-controls="slide-3" aria-selected="true"> Concept Based Learning  </a>
+      </li>
+	  
+	  
+      <li class="nav-item d-none d-lg-block">
+        <a class="nav-link" id="a-slide-4" onclick="clearInterval(myInterval);" data-toggle="tab" href="#slide-4" role="tab" aria-controls="slide-4" aria-selected="false">STEM for our <br>Jr. Scientists</a>
+		
+		 
+      </li>
+	  <li class="nav-item">
+        <a class="nav-link d-none d-lg-block" id="a-slide-5" onclick="clearInterval(myInterval);" data-toggle="tab" href="#slide-5" role="tab" aria-controls="slide-5" aria-selected="false"> Track Your Child's Progress</a>
+		
+		<a class="nav-link d-block d-lg-none" id="a-slide-5" onclick="clearInterval(myInterval);" data-toggle="tab" href="#slide-5" role="tab" aria-controls="slide-5" aria-selected="false"> Track Your Child's Progress</a>
+      </li>
+	  
+  </ul>
+
+  <!-- Tab panes -->
+  <div class="tab-content">
+   <div class="tab-pane fade  show active" id="slide-1" role="tabpanel" aria-labelledby="profile-tab">
+    <div class="row mrgt30">
+	<div class="col-sm-3 col-md-3 col-lg-3 col-xl-3">
+	<h5 class="gray-bg">Top 1%</h5>
+	<h5 class="gray-bg">Well Experienced</h5>
+	<h5 class="gray-bg">Patient & Friendly</h5>
+	<h5 class="gray-bg">Regular Trainings</h5>
+	</div>
+	<div class="col-sm-9 col-md-9 col-lg-9 col-xl-9">
+	<p class="text-bg">We hire the top 1% of teachers to help young learners thrive & discover their full potential.</p>
+	<p class="text-bg">Our Teachers have a versatile experience with the best schools in the country.</p>
+	<p class="text-bg">Our Teachers nurture connections and build relationships with students.</p>
+	<p class="text-bg">Regular Trainings are provided to keep them at par with the new technology & methods of
+teaching.
+</p>
+	</div>
+	</div>
+   </div>
+  <div class="tab-pane fade" id="slide-2" role="tabpanel" aria-labelledby="contact-tab">
+   <div class="row mrgt30">
+	<div class="col-lg-2">
+	<h5 class="gray-bg">Small Batches</h5>
+	<h5 class="gray-bg">Interaction</h5>
+	<h5 class="gray-bg">Peer Support</h5>
+	 
+	</div>
+	<div class="col-lg-10">
+	<p class="text-bg">Our Limited Batch Capacity ensures better learning with a personal approach.</p>
+	<p class="text-bg">Personal interaction with a well experienced teacher on regular basis, makes your child confident,
+expressive and matured.</p>
+	<p class="text-bg">Peer learning motivates kids to interact & learn from each other. It adds fun to the process of
+learning.</p>
+	 
+	</div>
+	</div>
+   </div>
+ <div class="tab-pane fade" id="slide-3" role="tabpanel" aria-labelledby="home-tab">
+  <div class="row mrgt30">
+	
+	<div class="col-lg-3">
+	<h5 class="gray-bg">Research Backed Curriculum</h5>
+	<h5 class="gray-bg">Core Concepts</h5>
+	<h5 class="gray-bg">Real World Applications</h5>
+	<h5 class="gray-bg">Academic Excellence</h5>
+	</div>
+	<div class="col-lg-9">
+	<p class="text-bg">Our domain specific & content rich curriculum is designed by experts with over 10 years of experience in education.</p>
+	<p class="text-bg">Our Pedagogy focuses on explaining the core concepts. It encourages logical,
+critical & out of the box thinking.
+</p>
+	<p class="text-bg">We explain the context of the topics with respect to their Real World Applications.
+This fosters curiosity & a passion for learning in children.</p>
+	<p class="text-bg">Our classes help children to improve their academic performance & stay 1 step
+ahead at school.</p>
+	</div>
+	</div>
+   </div>
+  <div class="tab-pane fade" id="slide-4" role="tabpanel" aria-labelledby="setting-tab">
+	
+		<div class="row mrgt30">
+	<div class="col-lg-12 text-center">
+	<p>We have STEM activities for Science & Math, to make learning interesting & easy.
+STEM means Science, Technology, Engineering, and Math.
+STEM is a project based learning method which provides hands on learning
+experience to understand concepts.</p>
+	</div>
+	 </div>
+	<div class="row mrgt30">
+	<div class="col-lg-12 text-center">
+	<h5>Below are some examples of the STEM activities & projects which our students are already doing:
+</h5>
+	</div>
+	 </div>
+	<div class="row">
+	<div class="col-lg-4 mrgtop20">
+	<img src="<?php echo base_url(); ?>web_components/images/lung-model-01.jpg" width="100%">
+	<p class="gray-bg-01">Lung Model</p>
+	 
+	</div>
+	<div class="col-lg-4 mrgtop20">
+	<img src="<?php echo base_url(); ?>web_components/images/functioning-heart-01.jpg" width="100%">
+	<p class="gray-bg-01">Functioning
+of Heart</p>
+	 
+	</div>
+	<div class="col-lg-4 mrgtop20">
+	<img src="<?php echo base_url(); ?>web_components/images/telescope-01.jpg" width="100%">
+	<p class="gray-bg-01">Telescope</p>
+	 
+	</div>
+	<div class="col-lg-4 mrgtop20">
+	<img src="<?php echo base_url(); ?>web_components/images/germs-01.jpg" width="100%">
+	<p class="gray-bg-01">Germs Experiment</p>
+	 
+	</div>
+	<div class="col-lg-4 mrgtop20">
+	<img src="<?php echo base_url(); ?>web_components/images/cloud- jar-01.jpg" width="100%">
+	<p class="gray-bg-01">Cloud in a jar</p>
+	 
+	</div>
+	 
+	</div>
+	 </div>
+ <div class="tab-pane fade" id="slide-5" role="tabpanel" aria-labelledby="child-tab">
+  
+  	<div class="row mrgt30">
+	<div class="col-lg-4 mrgtop20">
+	<div  class="gray-bg-01">
+	<img src="<?php echo base_url(); ?>web_components/images/question-mark.png" class="blu-bg" width="64px">
+	<p class="gray-bg-03">Revision & Doubt Clearing</p>
+	 
+	</div></div>
+	<div class="col-lg-4 mrgtop20">
+	<div  class="gray-bg-01">
+	<img src="<?php echo base_url(); ?>web_components/images/homework.png" class="blu-bg" width="64px">
+	<p class="gray-bg-03">Homework</p>
+	 
+	</div></div>
+	
+	<div class="col-lg-4 mrgtop20">
+	<div  class="gray-bg-01">
+	<img src="<?php echo base_url(); ?>web_components/images/paper.png" class="blu-bg" width="64px">
+	<p class="gray-bg-03">Weekly Worksheets</p>
+	 
+	</div></div>
+	<div class="col-lg-4 mrgtop20">
+	<div  class="gray-bg-01">
+	<img src="<?php echo base_url(); ?>web_components/images/analytics.png" class="blu-bg" width="64px">
+	<p class="gray-bg-03">Monthly Assessments</p>
+	 
+	</div></div>
+	<div class="col-lg-4 mrgtop20">
+	<div  class="gray-bg-01">
+	<img src="<?php echo base_url(); ?>web_components/images/meeting.png" class="blu-bg" width="64px">
+	<p class="gray-bg-03">Parent Teacher Meetings</p>
+	 
+	</div>
+	</div>
+	 
+	</div>
+   </div>
+  </div>
+
+</div>
+ </div>
+	
+	</div>
+	</div>
+	</section>
+	
+<section class="our-experties d-none d-md-block">
+  		<div class="container">
+  			<div class="row text-center">
+			<div class="col-md-12">
+  				<h3>What do we offer if you enrol with us?</h3>
+  				 
+  			</div>
+			</div>
+  			
+  			<div class="row text-center"><div class="col-md-12">An ALL in ONE place for your child's learning</div></div>
+  			
+  			<div class="expertise-circle row ">
+  				<div class="block pos-left top-block l1">
+				<div class="row mrright">
+				<div class="col-md-10 col-sm-12">
+				Live & Interactive Classes
+				</div>
+				<div class="col-md-2 d-none d-md-block">
+				 <img src="<?php echo base_url(); ?>web_components/images/webinar.png"  width="40px">
+				</div>
+				</div>
+				</div>
+  				<div class="block pos-left bottom-block circle-text-ctrl1 l2">
+                <div class="row mrright">
+				<div class="col-md-10 col-sm-12">
+				Doubt Clearing & Revision Sessions
+				</div>
+				<div class="col-md-2 d-none d-md-block">
+				 <img src="<?php echo base_url(); ?>web_components/images/question-mark.png"  width="40px">
+				</div>
+				</div>
+
+
+</div>
+				<div class="block pos-left bottom-block circle-text-ctrl2 l3">
+				 <div class="row mrright">
+				<div class="col-md-10 col-sm-12">
+				Parent Teacher Meetings
+				</div>
+				<div class="col-md-2 d-none d-md-block">
+				 <img src="<?php echo base_url(); ?>web_components/images/meeting.png" width="40px">
+				</div>
+				</div>
+				
+				</div>
+<div class="block pos-left bottom-block l4">
+ <div class="row mrright">
+				<div class="col-md-10 col-sm-12">
+				Recorded Classes
+on Request
+				</div>
+				<div class="col-md-2 d-none d-md-block">
+				 <img src="<?php echo base_url(); ?>web_components/images/video-lesson.png" width="40px">
+				</div>
+				</div>
+
+</div>
+  				<img src="<?php echo base_url(); ?>web_components/images/circle-img-01.png" alt="" width="100%" class="img-circle">
+  				<div class="block pos-right top-block r1">
+				 <div class="row mrleft">
+				 <div class="col-md-2 d-none d-md-block">
+				 <img src="<?php echo base_url(); ?>web_components/images/paper.png" width="40px">
+				</div>
+				<div class="col-md-10 col-sm-12 pdc">
+	Weekly Practice Worksheets</div>
+				 
+				</div>
+				</div>
+  				<div class="block pos-right bottom-block circle-text-ctrl3 r2">
+				 <div class="row mrleft">
+				 <div class="col-md-2 d-none d-md-block">
+				 <img src="<?php echo base_url(); ?>web_components/images/question-mark.png" width="40px">
+				</div>
+				<div class="col-md-10 col-sm-12 pdc">
+	STEM & Creative Activities</div>
+				 
+				</div>
+				</div>
+				<div class="block pos-right bottom-block circle-text-ctrl4 r3">
+				
+				 <div class="row mrleft">
+				 <div class="col-md-2 d-none d-md-block">
+				 <img src="<?php echo base_url(); ?>web_components/images/analytics.png" width="40px">
+				</div>
+				<div class="col-md-10 col-sm-12 pdc">
+	Monthly Assessments</div>
+				 
+				</div>
+				</div>
+				<div class="block pos-right bottom-block r4">
+				<div class="row mrleft">
+				<div class="col-md-2 d-none d-md-block">
+				 <img src="<?php echo base_url(); ?>web_components/images/whatsapp.png" width="40px">
+				</div>
+				<div class="col-md-10 col-sm-12 pdc">
+	Personal Whatsapp Support</div>
+				
+				</div>
+				</div>
+  			</div>
+  		</div>
+  	</section>
+	  <section class="our-experties d-block d-md-none">
+  		<div class="container">
+  			<div class="row text-center">
+			<div class="col-md-12 col-12">
+  				<h3>What do we offer if you enrol with us?</h3>
+  				 
+  			</div>
+			</div>
+  			
+  			<div class="row text-center"><div class="col-md-12">An ALL in ONE place for your child's learning</div></div>
+  			
+  			<div class="pd-50">
+  				 
+				<div class="row">
+				<div class="col-md-2 col-2">
+				 <img src="<?php echo base_url(); ?>web_components/images/webinar.png"  width="40px" class="mob-icon">
+				</div>
+				<div class="col-md-10 col-10">
+				<p class="pd-20">Live & Interactive Classes</p>
+				</div>
+				
+				</div>
+			 
+  				 
+                <div class="row">
+				<div class="col-md-2 col-2">
+				 <img src="<?php echo base_url(); ?>web_components/images/question-mark.png"  width="40px" class="mob-icon">
+				</div>
+				<div class="col-md-10 col-10">
+				<p class="pd-20">Doubt Clearing & Revision Sessions</p>
+				</div>
+				
+				</div>
+ <div class="row">
+				 <div class="col-md-2 col-2">
+				 <img src="<?php echo base_url(); ?>web_components/images/meeting.png" width="40px" class="mob-icon">
+				</div>
+				<div class="col-md-10 col-10">
+				<p class="pd-20">Parent Teacher Meetings</p>
+				</div>
+		</div>
+<div class="row">
+                 <div class="col-md-2 col-2">
+				 <img src="<?php echo base_url(); ?>web_components/images/video-lesson.png" width="40px" class="mob-icon">
+				</div>
+				<div class="col-md-10 col-10">
+				<p class="pd-20">Recorded Classes on Request</p>
+				</div>
+				</div>
+<div class="row">
+				 <div class="col-md-2 col-2">
+				 <img src="<?php echo base_url(); ?>web_components/images/paper.png" width="40px" class="mob-icon">
+				</div>
+				<div class="col-md-10 col-10">
+	<p class="pd-20">Weekly Practice Worksheets</p></div>
+				 
+				</div>
+			  <div class="row">
+				 <div class="col-md-2 col-2">
+				 <img src="<?php echo base_url(); ?>web_components/images/question-mark.png" width="40px" class="mob-icon">
+				</div>
+				<div class="col-md-10 col-10">
+	<p class="pd-20">STEM & Creative Activities </p></div>
+				 
+				</div>
+				 <div class="row">
+				 <div class="col-md-2 col-2">
+				 <img src="<?php echo base_url(); ?>web_components/images/analytics.png" width="40px" class="mob-icon">
+				</div>
+				<div class="col-md-10 col-10">
+	<p class="pd-20">Monthly Assessments</p></div>
+				 
+				</div>
+			 <div class="row">
+				<div class="col-md-2 col-2">
+				 <img src="<?php echo base_url(); ?>web_components/images/whatsapp.png" width="40px" class="mob-icon">
+				</div>
+				<div class="col-md-10 col-10">
+	<p class="pd-20">Personal Whatsapp Support</p></div>
+				
+				</div>
+			 
+  			</div>
+  		</div>
+  	</section>
+	 <section id="light-bg-02">
+	 <div class="container">
+      <div class="row text-center">
+			<div class="col-md-12">
+  				<h2>Let's Instill a Passion for Learning </h2>
+  				 
+  			</div>
+			</div>
+  			
+  			<div class="row text-center">
+			<div class="col-md-12">Select your child's grade & explore our courses</div>
+			
+			</div><br>
+			<div class="row text-center">
+			<div class="col-md-12"><a href="#" class="custom-button"><span> EXPLORE COURSES </span></a></div>
+			
+			</div>
+        </div>
+	  </section>
+	 <section id="light-bg-01">
+	<div class="container">
+		<div class="row text-center">
+	 <div class="col-lg-12">
+	 <h3>Why Pre- Primary and Primary Learning<br> classes are important for your child?
+</h3>
+	 
+	 	</div>
+		</div>
+		<div class="row mrgt30">
+	<div class="col-sm-3 col-md-3 col-lg-3 col-xl-3">
+	<h5 class="gray-bg-02">Head Start in Life</h5>
+	<h5 class="gray-bg-02">Better Performance in Higher Grades</h5>
+	<h5 class="gray-bg-02">Learners & Doers</h5>
+	 
+	</div>
+	<div class="col-sm-9 col-md-9 col-lg-9 col-xl-9">
+	<p class="text-bg">YOU CAN'T BUILD A STRONG BUILDING ON A WEAK FOUNDATION! Early Foundational learning is critical for a child's holistic development. When children are given the best resources and teachers at an early age, they get a head start in life. An active learning environment enables your child's constant development.
+</p>
+	<p class="text-bg">If the concepts of the Primary classes are strong, it's easier for your child to perform well in Higher Grades. The major reason why kids face difficulty with academics in higher grades, is because of a weak foundation in Primary classes. Extra classes with a concept based curriculum is the only way a child can gain in depth knowledge about a subject.
+</p>
+	<p class="text-bg">We pave the way for a future where children can make decisions and continue to be critical, creative thinkers and doers. We are dedicated to help young learners thrive and discover their full potential at every step in life.
+</p>
+	 
+	</div>
+	</div>
+        </div>
+	  </section>
+	  <div class="counter-section pdtb-70 bg_img" data-background="<?php echo base_url(); ?>web_components/images/banner12.jpg">
+        <div class="container-fluid container-fluid1 ">
+         
+			 
+			 <div class="row">
+                   
+                    <div class="col-lg-7 pdt-mid">
+                        <div class="about-content">
+                            <div class="section-header left-style mb-olpo">
+                                
+                                <h3 class="title black-text fs-46">Relax and watch your kids learn, <br>right before your eyes</h3><br>
+                                 <a href="#" class="custom-button"><span> BOOK A FREE TRIAL </span></a>
+                            </div>
+                         
+                       
+                        </div>
+                    </div>
+					 <div class="col-lg-5">
+                        <div class="about-thumb">
+                            <img src="<?php echo base_url(); ?>web_components/images/img-06.jpg" class="img-box-ctrl" alt="about">
+                        </div>
+                    </div>
+                </div>
+			
+        </div>
+    </div>
+ <section id="light-bg-01">
+	 <div class="container">
+ <div class="row text-center">
+	 <div class="col-lg-12">
+	 <h3 class="d-none d-md-block">Why our Online Classes are the best for your child?</h3> 
+	 <h3 class="d-block d-md-none">Why our Online Classes <br>are the best for your child?</h3>
+	 
+	 	</div>
+		</div>
+		
+		
+		 <div class="row text-center">
+	 <div class="col-lg-4 mrgt30 img-transition">
+	 <div class="box-shadow-ctrl">
+	 <img src="<?php echo base_url(); ?>web_components/images/fingerprint-scan.png" width="80px" class="icon-bg-ctrl">
+	 <h5>Access learning at your fingertips</h5>
+	 
+	 	</div>
+		</div>
+		
+		 <div class="col-lg-4 mrgt30 img-transition">
+	 <div class="box-shadow-ctrl">
+	 <img src="<?php echo base_url(); ?>web_components/images/teacher.png" width="80px" class="icon-bg-ctrl">
+	 <h5>Best <br>teachers at home</h5>
+	 
+	 	</div>
+		</div>
+		
+		 <div class="col-lg-4 mrgt30 img-transition">
+	 <div class="box-shadow-ctrl">
+	 <img src="<?php echo base_url(); ?>web_components/images/doormat.png" width="80px" class="icon-bg-ctrl">
+	 <h5> Best curriculum at your doorstep</h5>
+	 
+	 	</div>
+		</div>
+		
+		 <div class="col-lg-4 mrgt30 img-transition">
+	 <div class="box-shadow-ctrl">
+	 <img src="<?php echo base_url(); ?>web_components/images/global-education.png" width="80px" class="icon-bg-ctrl">
+	 <h5>Learn from anywhere in the world</h5>
+	 
+	 	</div>
+		</div>
+		
+		 <div class="col-lg-4 mrgt30 img-transition">
+	 <div class="box-shadow-ctrl">
+	 <img src="<?php echo base_url(); ?>web_components/images/teaching.png" width="80px" class="icon-bg-ctrl">
+	 <h5>Transparency <br>Observe how we teach</h5>
+	 
+	 	</div>
+		</div>
+		
+		 <div class="col-lg-4 mrgt30 img-transition">
+	 <div class="box-shadow-ctrl">
+	 <img src="<?php echo base_url(); ?>web_components/images/bar-chart.png" width="80px" class="icon-bg-ctrl">
+	 <h5>Flexible & Time<br> Saving </h5>
+	 
+	 	</div>
+		</div>
+		
+		
+		</div>
+		
+        </div>
+	  </section>
+	
+    
+	 <script>
+	  $('.testimonial-carousel').owlCarousel({
+            loop: true,
+            margin: 30,
+            nav: false,
+            navText: [
+                "<i class='fa fa-angle-left'></i>",
+                "<i class='fa fa-angle-right'></i>"
+            ],
+            dots: true,
+            autoplay: true,
+            responsive: {
+                0: {
+                    items: 1
+                },
+                600: {
+                    items: 1
+                },
+                1000: {
+                    items: 1
+                }
+            }
+        });
+	 
+	 </script>
+	 
+	 
+	 <script>
+	 
+	 $("#tile-1 .nav-tabs a").click(function() {
+  var position = $(this).parent().position();
+  var width = $(this).parent().width();
+    $("#tile-1 .slider").css({"left":+ position.left,"width":width});
+});
+
+var actWidth = $("#tile-1 .nav-tabs").find(".active").parent("li").width();
+var actPosition = $("#tile-1 .nav-tabs .active").position();
+$("#tile-1 .slider").css({"left":+ actPosition.left,"width": actWidth});
+	 </script>
+	 
+	 
+	 
+  <script>
+	   
+	   var t = 1;
+	   
+	   function toggle_data_tab()
+	   { 
+		    t++;
+			
+			$('.nav-link').removeClass('active');
+			$("#a-slide-"+t).addClass('active');
+			$('nav-item a.active').fadeOut(300);
+			$('.tab-pane').removeClass('active');
+			$("#slide-"+t).addClass('show').addClass('active');
+			
+			var position = $("#a-slide-"+t).parent().position();
+		    var width = $("#a-slide-"+t).parent().width();
+			$("#tile-1 .slider").css({"left":+ position.left,"width":width});
+			
+			if(t == 5){ t = 0; }
+	   }
+	   
+	   var myInterval = setInterval( toggle_data_tab , 8000);
+	 </script> 
+	 
+ <script>
+/* When the user clicks on the button, 
+toggle between hiding and showing the dropdown content */
+function myFunction() {
+  document.getElementById("myDropdown").classList.toggle("show");
+}
+
+// Close the dropdown if the user clicks outside of it
+window.onclick = function(e) {
+  if (!e.target.matches('.dropbtn')) {
+  var myDropdown = document.getElementById("myDropdown");
+    if (myDropdown.classList.contains('show')) {
+      myDropdown.classList.remove('show');
+    }
+  }
+}
+</script>
+

@@ -1,0 +1,37 @@
+
+
+
+.icon-bar {
+  position: fixed;
+  top: 50%;
+  right: 0;
+  -webkit-transform: translateY(-50%);
+  -ms-transform: translateY(-50%);
+  transform: translateY(-50%);
+  z-index: 999
+}
+
+.icon-bar a {
+ display: block;
+ text-align: center;
+ padding: 16px;
+ transition: all .3s ease;
+ color: #fff;
+ font-size: 20px;
+}
+
+
+.whatsapp-1 {
+  background: #25D366;
+  color: #fff;
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+  
+}
+
+.whatsapp-1:hover {
+  background: #16a334;
+  color: #fff;
+  border-top-left-radius: 10px;
+  
+}

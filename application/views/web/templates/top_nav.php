@@ -1,0 +1,266 @@
+ <header>
+      <div class="header-top d-none">
+            <div class="container">
+                <div class="header-top-area">
+                    <ul class="left">
+                         
+                        <li>
+                           <i class="fas fa-phone-alt"></i>  <a href="#">+91-8830657425</a> , <a href="#">
+
++91-9922179906</a>
+                        </li>
+                        <li>
+                            <i class="fas fa-envelope"></i> hello@littlerabbitspreschool.com
+                        </li>
+                    </ul>
+                    <ul class="social-icons">
+                        <li>
+                            <a href="#"><i class="fas fa-home"></i></a>
+                        </li>
+						<li>
+                            <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        </li>
+                        <li>
+                            <a href="#"><i class="fab fa-instagram"></i></a>
+                        </li>
+                        <li>
+                            <a href="#"><i class="fab fa-linkedin"></i></a>
+                        </li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div> 
+        <div class="header-bottom">
+            <div class="container-fluid container-fluid1">
+                <div class="header-wrapper">
+                    <div class="logo">
+                        <a href="<?php echo base_url(); ?>index">
+                            <img src="<?php echo base_url(); ?>web_components/images/logo-02.png" width="100%" alt="logo">
+                        </a>
+                    </div>
+                    <div class="menu-area">
+                        <ul class="menu">
+                           <!-- <li>
+                                <a href="#0"><i class="fas fa-home"></i>Home</a>
+                                <ul class="submenu">
+                                    <li>
+
+                                        <a href="index.html">Home One</a>
+                                    </li>
+                                    <li>
+                                        <a href="index-2.html" class="active">Home Two</a>
+                                    </li>
+                                </ul>
+                            </li>-->
+                             
+							
+							<li>
+                                <a href="<?php echo base_url(); ?>index">Online Pre-School</a>
+                            </li>
+							
+							<!--<li>
+                                <a href="#"> Pre-Primary</a>
+                            </li>
+							
+							<li>
+                                <a href="#"> Grade 1 to 3</a>
+
+                            </li>
+                         
+                            <li>
+                                <a href="#"> Phonics & Spoken English</a>
+                            </li>-->
+							
+							<li>
+                                <a href="https://docs.google.com/forms/d/e/1FAIpQLSftYX_AnRLxB6cUiCAyiFNcY8dRoXqahl_hEgiXbdOmi7df4A/viewform" target="_blank"> Teach With Us</a>
+                            </li>
+                           <!-- <li>
+                                <a href="#0"><i class="fas fa-layer-group"></i>Pages</a>
+                                <ul class="submenu">
+                                    <li>
+                                        <a href="#0">Teacher</a>
+                                        <ul class="submenu">
+                                            <li>
+                                                <a href="teacher.html">Our Teacher</a>
+
+                                            </li>
+                                            <li>
+                                                <a href="teacher-single.html">Teacher Single</a>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li>
+                                        <a href="#0">Account</a>
+                                        <ul class="submenu">
+
+                                            <li>
+                                                <a href="login.html">Sign In</a>
+                                            </li>
+                                            <li>
+                                                <a href="registration.html">Sign Up</a>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li>
+                                        <a href="#0">Events</a>
+                                        <ul class="submenu">
+                                            <li>
+                                                <a href="events.html">Our Events</a>
+                                            </li>
+                                            <li>
+                                                <a href="events-single.html">Events Single</a>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li>
+                                        <a href="#0">Shop</a>
+                                        <ul class="submenu">
+                                            <li>
+                                                <a href="shop.html">Our Shop</a>
+                                            </li>
+                                            <li>
+                                                <a href="shop-single.html">Shop Single</a>
+                                            </li>
+                                            <li>
+                                                <a href="cart.html">Cart</a>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li>
+                                        <a href="faqs.html">Faqs</a>
+                                    </li>
+                                    <li>
+                                        <a href="#0">Our Gallery</a>
+                                        <ul class="submenu">
+                                            <li>
+                                                <a href="gallery.html">Gallery One</a>
+                                            </li>
+                                            <li>
+                                                <a href="gallery-2.html">Gallery Two</a>
+                                            </li>
+                                            <li>
+                                                <a href="gallery-3.html">Gallery Three</a>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li>
+                                        <a href="coming-soon.html">Coming Soon</a>
+                                    </li>
+                                    <li>
+                                        <a href="error-page.html">404 Error</a>
+                                    </li>
+                                </ul>
+                            </li>-->
+                            
+							
+							<li>
+                                <a href="<?php echo base_url(); ?>learning-videos"> Learning Videos</a>
+                            </li>
+							
+							<li>
+                                <a href="<?php echo base_url(); ?>index#admissionprocess"> Admission Process</a>
+                            </li>
+							<li>
+                                <a href="<?php echo base_url(); ?>refer-a-friend"> Refer a Friend</a>
+                            </li>
+							 
+                        </ul>
+                        
+                         <!--<div class="search-button">
+                            
+                        </div>-->
+                        
+                        <div class="header-bar d-lg-none">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                        <div class="ellepsis-bar d-none d-lg-none">
+                            <i class="fas fa-ellipsis-h"></i>
+                        </div> 
+						
+						<div class="ellepsis-bar d-none d-lg-block">
+                         
+						 <a href="#" class="header-btn" data-toggle="modal" data-target="#exampleModal"><span> FREE TRIAL  </span></a>
+                        </div>
+						<div class="ellepsis-bar1 d-none d-lg-block"> 
+		<!--<form action="/action_page.php">
+   
+  <select name="Country" id="Country">
+    <option value="ind"> INDIA</option>
+	 <option value="can">CANADA</option>
+    <option value="usa"> USA</option>
+ 
+  </select>
+ 
+  
+</form>-->
+<!--slidetoggle_div-->
+
+<div class="dropdown">
+   <button class="dropbtn" id="slidetoggle" onclick="slidetoggle_div();"><img src="<?php echo base_url(); ?>web_components/images/india.png" width="20px" class="mrgt-3"> IND
+    <i class="fa fa-caret-down"></i>
+  </button>
+  <div class="dropdown-content" id="div1">
+    <a href="#"><img src="<?php echo base_url(); ?>web_components/images/india.png" width="20px" class="mrgt-3"> IND</a>
+	<a href="#"><img src="<?php echo base_url(); ?>web_components/images/canada.png" width="20px" class="mrgt-3"> CAN</a>
+    <a href="#"><img src="<?php echo base_url(); ?>web_components/images/usa.png" width="20px" class="mrgt-3"> USA</a>
+	<a href="#"><img src="<?php echo base_url(); ?>web_components/images/aus.png" width="20px" class="mrgt-3"> AUS</a>
+	<a href="#"><img src="<?php echo base_url(); ?>web_components/images/uae.png" width="20px" class="mrgt-3"> UAE</a>
+     
+  </div> 
+ 
+  </div> 
+
+<!--<div class="dropdown">
+   <button class="dropbtn" id="slidetoggle" onclick="slidetoggle_div();"><img src="<?php echo base_url(); ?>web_components/images/india.png" width="20px" class="mrgt-3"> IND
+    <i class="fa fa-caret-down"></i>
+  </button>
+  <div class="dropdown-content" id="div1">
+    <a href="#"><img src="<?php echo base_url(); ?>web_components/images/india.png" width="20px" class="mrgt-3"> IND</a>
+	<a href="#"><img src="<?php echo base_url(); ?>web_components/images/canada.png" width="20px" class="mrgt-3"> CAN</a>
+    <a href="#"><img src="<?php echo base_url(); ?>web_components/images/usa.png" width="20px" class="mrgt-3"> USA</a>
+	<a href="#"><img src="<?php echo base_url(); ?>web_components/images/aus.png" width="20px" class="mrgt-3"> AUS</a>
+	<a href="#"><img src="<?php echo base_url(); ?>web_components/images/uae.png" width="20px" class="mrgt-3"> UAE</a>
+     
+  </div> 
+ 
+  </div> -->
+
+
+                        </div>
+                        
+                         
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+	
+	
+	<div class="icon-bar">
+<a class="whatsapp-1" href="#" rel="nofollow" target="_blank"><i class="fa fa-whatsapp"></i></a>
+
+<a class="phone-1" href="#" rel="nofollow" target="_blank"><i class="fa fa-phone"></i></a> 
+ 
+</div>
+
+
+	 <!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title  text-center" id="exampleModalLabel">Book 3 Days Free Trial</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="box-shadow: none; text-align: right;">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+      <?php include APPPATH."views/web/pages/enquiry-form.php";?>
+      </div>
+   
+    </div>
+  </div>
+</div>
