@@ -52,6 +52,48 @@
     "ं": "n", "ँ": "n", "ः": "h", "़": "", "।": ".", "॥": "."
   };
 
+  /*
+   * Kruti Dev 010 / Remington-Gail key layout.
+   * Compiled from two reference keyboard charts and a Kruti Dev typing PDF
+   * the user supplied, cross-checked against each other where they
+   * overlapped. Output is real Unicode Devanagari (not the legacy Kruti Dev
+   * byte encoding), so it renders correctly in any standard font without
+   * needing the proprietary Kruti Dev .ttf file.
+   * "preBase: true" marks the well-known Kruti Dev quirk where the short i
+   * matra (ि) is struck BEFORE its consonant, matching physical typewriter
+   * order, even though it must land AFTER the consonant in Unicode text.
+   * A few rarer shift combinations were not independently confirmable from
+   * the source material and are left unmapped rather than guessed.
+   */
+  const KRUTI_KEYMAP = {
+    "1": { base: "१", shift: "!" }, "2": { base: "२", shift: "@" },
+    "3": { base: "३", shift: "#" }, "4": { base: "४", shift: "$" },
+    "5": { base: "५", shift: "%" }, "6": { base: "६", shift: "^" },
+    "7": { base: "७", shift: "&" }, "8": { base: "८", shift: "*" },
+    "9": { base: "९", shift: "(" }, "0": { base: "०", shift: ")" },
+    "=": { base: null, shift: "त्र" },
+
+    q: { base: "ृ", shift: "त्" }, w: { base: null, shift: "ऊ" },
+    e: { base: "म", shift: "म्" }, r: { base: "त", shift: "त्र" },
+    t: { base: "ज", shift: "ज्" }, y: { base: "ल", shift: "ल्" },
+    u: { base: "न", shift: "न्" }, i: { base: "प", shift: "प्" },
+    o: { base: "व", shift: "व्" }, p: { base: "च", shift: "च्" },
+    "[": { base: "ख", shift: "क्ष" }, "]": { base: ",", shift: "ै" },
+
+    a: { base: "ं", shift: "ष्" }, s: { base: "्", shift: "श" },
+    d: { base: "क", shift: "क़" }, f: { base: "ि", shift: "ई", preBase: true },
+    g: { base: "ह", shift: "ळ" }, h: { base: "ी", shift: "भ" },
+    j: { base: "र", shift: "श्र" }, k: { base: "ा", shift: "ज्ञ" },
+    l: { base: "स", shift: "स्" }, ";": { base: "य", shift: "रू" },
+    "'": { base: "श", shift: "ठ" },
+
+    z: { base: null, shift: "र्" }, x: { base: "ग", shift: "ग्" },
+    c: { base: "ब", shift: "ब्" }, v: { base: "अ", shift: "ट" },
+    b: { base: "इ", shift: "ठ" }, n: { base: "द", shift: "छ" },
+    m: { base: "उ", shift: "ड" }, ",": { base: "ए", shift: "ढ" },
+    ".": { base: "ण", shift: "झ" }, "/": { base: "ङ", shift: "घ" }
+  };
+
   const enSamples = [
   "Consistent typing practice builds muscle memory and improves overall productivity. Small improvements every day create long-term results.",
 
@@ -81,7 +123,47 @@
 
   "Learning to type efficiently can improve communication speed and overall workflow in both personal and professional environments.",
 
-  "The best way to improve typing is through regular practice, honest self-review, and gradual increases in difficulty over time."
+  "The best way to improve typing is through regular practice, honest self-review, and gradual increases in difficulty over time.",
+
+  "Government offices are increasingly moving toward digital record keeping to reduce paperwork and improve transparency. Citizens now expect faster response times and easier access to services.",
+
+  "Effective communication is the foundation of good customer service. Listening carefully and responding clearly prevents misunderstandings and builds trust between people.",
+
+  "Software developers spend a significant part of their day writing, testing, and reviewing code. Clean and well documented code saves time for the entire team.",
+
+  "Time management is an essential skill for anyone working in a busy office environment. Prioritizing tasks helps reduce stress and improves overall efficiency.",
+
+  "Digital literacy has become just as important as traditional literacy in the modern workplace. Basic computer skills open doors to countless opportunities.",
+
+  "A well organized desk and a clear mind often go hand in hand. Removing distractions allows the brain to focus fully on the task at hand.",
+
+  "Public sector organizations are adopting new technologies to serve citizens more efficiently. Online portals reduce the need for repeated visits to government offices.",
+
+  "Learning a new skill takes consistent effort over weeks and months rather than a single burst of motivation. Small daily habits compound into major results.",
+
+  "Good typing skills reduce the time spent on data entry and documentation work. Accuracy matters more than raw speed when working with sensitive records.",
+
+  "Teamwork often produces better results than individual effort alone. Sharing knowledge and supporting colleagues creates a stronger and more capable team.",
+
+  "Reading regularly improves vocabulary, comprehension, and overall communication ability. A habit of reading even a few pages daily builds long term knowledge.",
+
+  "Attention to detail is critical when handling official documents and citizen records. A single small error can lead to significant delays and confusion.",
+
+  "Technology continues to reshape the way people work, communicate, and solve problems. Staying updated with new tools keeps professionals relevant in their field.",
+
+  "Punctuality reflects discipline and respect for other people's time. Arriving prepared and on time creates a strong first impression in any setting.",
+
+  "Clear and concise writing helps readers understand information quickly without confusion. Avoiding unnecessary words makes any document easier to read.",
+
+  "Problem solving skills are valuable in almost every profession. Breaking a large problem into smaller steps makes it easier to find a solution.",
+
+  "Customer trust is built slowly through consistent and honest service over time. A single negative experience can undo months of goodwill.",
+
+  "Continuous learning keeps skills sharp in a rapidly changing job market. Professionals who invest in their own growth tend to advance faster.",
+
+  "Data entry work requires patience, focus, and a steady rhythm. Rushing through records often introduces errors that take longer to fix later.",
+
+  "A positive attitude at work can influence the mood of an entire team. Encouraging words and small gestures often make a big difference."
 ];
 const hiSamples = [
   "नियमित अभ्यास से टाइपिंग की गति और शुद्धता दोनों बेहतर होती हैं। ध्यान से पढ़ें और शांत गति से लिखें।",
@@ -112,19 +194,88 @@ const hiSamples = [
 
   "गलतियों से सीखना और उन्हें सुधारना टाइपिंग कौशल को मजबूत बनाता है।",
 
-  "नियमित अभ्यास से उंगलियों की गति और शब्दों की पहचान दोनों में सुधार आता है।"
+  "नियमित अभ्यास से उंगलियों की गति और शब्दों की पहचान दोनों में सुधार आता है।",
+
+  "सरकारी कार्यालयों में अब डिजिटल रिकॉर्ड रखने पर अधिक जोर दिया जा रहा है। इससे कागजी कार्रवाई कम होती है और पारदर्शिता बढ़ती है।",
+
+  "अच्छा संचार किसी भी सेवा का आधार होता है। ध्यान से सुनना और स्पष्ट रूप से जवाब देना गलतफहमी को रोकता है।",
+
+  "समय प्रबंधन एक महत्वपूर्ण कौशल है जो कार्यस्थल पर तनाव कम करता है। प्राथमिकताएं तय करने से काम आसान हो जाता है।",
+
+  "डिजिटल साक्षरता आज के समय में उतनी ही जरूरी है जितनी पारंपरिक शिक्षा। कंप्यूटर का बुनियादी ज्ञान नए अवसर खोलता है।",
+
+  "साफ सुथरी मेज और शांत मन दोनों एक साथ बेहतर काम करने में मदद करते हैं। ध्यान भटकाने वाली चीजों को दूर रखना जरूरी है।",
+
+  "सार्वजनिक क्षेत्र की संस्थाएं नई तकनीक अपनाकर नागरिकों को बेहतर सेवा दे रही हैं। ऑनलाइन पोर्टल बार-बार कार्यालय जाने की जरूरत को कम करते हैं।",
+
+  "कोई भी नया कौशल सीखने में समय और निरंतर प्रयास लगता है। छोटी-छोटी आदतें मिलकर बड़े परिणाम देती हैं।",
+
+  "अच्छी टाइपिंग क्षमता दस्तावेज़ीकरण के काम में समय बचाती है। संवेदनशील रिकॉर्ड के साथ काम करते समय गति से अधिक शुद्धता मायने रखती है।",
+
+  "टीम वर्क अक्सर अकेले काम करने से बेहतर परिणाम देता है। ज्ञान साझा करना और सहकर्मियों की मदद करना टीम को मजबूत बनाता है।",
+
+  "नियमित रूप से पढ़ने की आदत शब्दावली और समझ को बेहतर बनाती है। रोज कुछ पन्ने पढ़ना लंबे समय में बड़ा ज्ञान देता है।",
+
+  "सरकारी दस्तावेजों को संभालते समय बारीकी पर ध्यान देना बहुत जरूरी है। एक छोटी सी गलती भी बड़ी देरी का कारण बन सकती है।",
+
+  "तकनीक लगातार लोगों के काम करने और समस्याएं सुलझाने के तरीके को बदल रही है। नई तकनीक से जुड़े रहना करियर के लिए फायदेमंद है।",
+
+  "समय की पाबंदी अनुशासन और दूसरों के समय के सम्मान को दर्शाती है। समय पर पहुंचना एक अच्छी छाप छोड़ता है।",
+
+  "स्पष्ट और संक्षिप्त लेखन पाठकों को जानकारी जल्दी समझने में मदद करता है। अनावश्यक शब्दों से बचना दस्तावेज़ को आसान बनाता है।",
+
+  "समस्या समाधान का कौशल लगभग हर पेशे में उपयोगी होता है। बड़ी समस्या को छोटे हिस्सों में बांटने से हल ढूंढना आसान हो जाता है।",
+
+  "नागरिकों का भरोसा लगातार ईमानदार सेवा से धीरे-धीरे बनता है। एक बुरा अनुभव महीनों की मेहनत पर पानी फेर सकता है।",
+
+  "लगातार सीखते रहना तेजी से बदलते कार्यक्षेत्र में कौशल को बनाए रखता है। जो लोग खुद पर निवेश करते हैं वे तेजी से आगे बढ़ते हैं।",
+
+  "डेटा एंट्री के काम में धैर्य, ध्यान और एक स्थिर लय की जरूरत होती है। जल्दबाजी करने से गलतियां होती हैं जिन्हें बाद में सुधारना पड़ता है।",
+
+  "कार्यस्थल पर सकारात्मक सोच पूरी टीम के माहौल को प्रभावित कर सकती है। अच्छे शब्द और छोटे इशारे भी बड़ा फर्क डालते हैं।",
+
+  "अनुशासन और मेहनत के साथ किया गया काम हमेशा बेहतर परिणाम देता है। निरंतरता ही सफलता की सबसे बड़ी कुंजी है।"
 ];
+
+  // Approximate words-per-minute a paragraph pool needs to sustain per
+  // language, sized generously above typical human typing speed so a fast
+  // typist never runs out of text before the timer ends. The renderer also
+  // auto-extends the target text near the end as a safety net.
+  const WPM_BUFFER = { english: 75, hindi: 55 };
+
+  // Font choices per language. Kruti Dev is a legacy, non-Unicode font that
+  // requires text to be encoded in its own ASCII key-map rather than
+  // standard Unicode Devanagari, so it cannot be applied directly to this
+  // Unicode text in a browser. The closest honest options are Unicode
+  // Devanagari fonts styled to look close to common government/office fonts.
+  const FONT_OPTIONS = {
+    english: [
+      { id: "sans", label: "Default (Sans)", family: "Inter, 'Segoe UI', Arial, sans-serif" },
+      { id: "mono", label: "Monospace (Roboto Mono)", family: "'Roboto Mono', 'Courier New', monospace" },
+      { id: "typewriter", label: "Typewriter (Courier Prime)", family: "'Courier Prime', 'Courier New', monospace" },
+      { id: "modern", label: "Modern (Poppins)", family: "'Poppins', Inter, sans-serif" }
+    ],
+    hindi: [
+      { id: "unicode", label: "Default (Unicode Devanagari)", family: "'Noto Sans Devanagari', 'Mangal', sans-serif" },
+      { id: "kruti-style", label: "Kruti Dev style (Unicode alt.)", family: "'Baloo 2', 'Noto Sans Devanagari', sans-serif" },
+      { id: "print", label: "Print style (Tiro Devanagari)", family: "'Tiro Devanagari Hindi', 'Noto Sans Devanagari', serif" }
+    ]
+  };
 
   const state = {
     direction: "hi-en",
     language: "english",
     active: false,
-    duration: 60,
-    remaining: 60,
+    duration: 300,
+    remaining: 300,
     startedAt: 0,
     timerId: null,
     target: "",
-    sampleIndex: 0
+    fontId: "sans",
+    pool: [],
+    poolCursor: 0,
+    hindiInputMethod: "phonetic",
+    kdPendingPreBase: ""
   };
 
   const $ = (id) => document.getElementById(id);
@@ -132,7 +283,12 @@ const hiSamples = [
   const elements = {
     practicePanel: $("practicePanel"),
     practiceLanguage: $("practiceLanguage"),
-    durationSelect: $("durationSelect"),
+    fontSelect: $("fontSelect"),
+    hindiInputRow: $("hindiInputRow"),
+    hindiInputMethod: $("hindiInputMethod"),
+    krutiLegend: $("krutiLegend"),
+    durationChips: $("durationChips"),
+    textLengthHint: $("textLengthHint"),
     timeLeft: $("timeLeft"),
     wpmValue: $("wpmValue"),
     accuracyValue: $("accuracyValue"),
@@ -306,15 +462,131 @@ const hiSamples = [
     return state.language === "hindi" ? hiSamples : enSamples;
   }
 
-  function chooseTarget(next) {
-    const samples = getSamples();
-    if (next) {
-      state.sampleIndex = (state.sampleIndex + 1) % samples.length;
-    } else {
-      state.sampleIndex = Math.min(state.sampleIndex, samples.length - 1);
+  function shuffle(list) {
+    const copy = list.slice();
+    for (let i = copy.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
     }
-    state.target = samples[state.sampleIndex];
-    renderTarget("");
+    return copy;
+  }
+
+  function countWords(text) {
+    return text.trim().split(/\s+/).filter(Boolean).length;
+  }
+
+  function requiredWordCount() {
+    const minutes = state.duration / 60;
+    const wpm = WPM_BUFFER[state.language] || 70;
+    return Math.max(30, Math.ceil(minutes * wpm));
+  }
+
+  function refillPool() {
+    state.pool = shuffle(getSamples());
+    state.poolCursor = 0;
+  }
+
+  function nextParagraph() {
+    if (state.poolCursor >= state.pool.length) {
+      refillPool();
+    }
+    const paragraph = state.pool[state.poolCursor];
+    state.poolCursor += 1;
+    return paragraph;
+  }
+
+  function updateTextLengthHint() {
+    if (!elements.textLengthHint) {
+      return;
+    }
+    const words = countWords(state.target);
+    const minutes = state.duration / 60;
+    elements.textLengthHint.textContent = `~${words} words for ${minutes} min`;
+  }
+
+  // Builds a fresh paragraph long enough to comfortably outlast the chosen
+  // duration for a fast typist, matching how real typing tests scale text
+  // to time rather than handing out a single short paragraph.
+  // function chooseTarget(fresh) {
+  //   if (fresh || !state.pool.length) {
+  //     refillPool();
+  //   }
+  //   const target = requiredWordCount();
+  //   const parts = [];
+  //   let words = 0;
+  //   while (words < target) {
+  //     const paragraph = nextParagraph();
+  //     parts.push(paragraph);
+  //     words += countWords(paragraph);
+  //   }
+  //   state.target = parts.join(" ");
+  //   updateTextLengthHint();
+  //   // Jump instantly to the top for a brand-new paragraph; smooth scrolling
+  //   // only kicks in once typing is actually in progress (see scrollTargetToCurrent).
+  //   elements.targetDisplay.style.scrollBehavior = "auto";
+  //   renderTarget("");
+  //   elements.targetDisplay.scrollTop = 0;
+  //   void elements.targetDisplay.offsetHeight;
+  //   elements.targetDisplay.style.scrollBehavior = "";
+  // }
+
+  function chooseTarget(fresh) {
+  if (fresh || !state.pool.length) {
+    refillPool();
+  }
+
+  const target = requiredWordCount();
+  const parts = [];
+  let words = 0;
+
+  while (words < target) {
+    const paragraph = nextParagraph();
+    parts.push(paragraph);
+    words += countWords(paragraph);
+  }
+
+  state.target = parts.join(" ");
+  updateTextLengthHint();
+
+  // Always start from the top
+  elements.targetDisplay.scrollTop = 0;
+
+  renderTarget("");
+}
+
+  // Called while the user is typing: if they are closing in on the end of
+  // the current text before time runs out, silently append more so a fast
+  // typist is never left with nothing to type.
+  function extendTargetIfNeeded(typedLength) {
+    if (!state.active) {
+      return;
+    }
+    const remainingChars = Array.from(state.target).length - typedLength;
+    if (remainingChars < 60) {
+      state.target += " " + nextParagraph();
+      updateTextLengthHint();
+    }
+  }
+
+  function populateFontOptions() {
+    const options = FONT_OPTIONS[state.language] || FONT_OPTIONS.english;
+    elements.fontSelect.innerHTML = options.map((option) =>
+      `<option value="${option.id}">${option.label}</option>`
+    ).join("");
+    const stillValid = options.some((option) => option.id === state.fontId);
+    state.fontId = stillValid ? state.fontId : options[0].id;
+    elements.fontSelect.value = state.fontId;
+    applyFont();
+  }
+
+  function applyFont() {
+    const options = FONT_OPTIONS[state.language] || FONT_OPTIONS.english;
+    const chosen = options.find((option) => option.id === state.fontId) || options[0];
+    elements.targetDisplay.style.fontFamily = chosen.family;
+    elements.typingInput.style.fontFamily = chosen.family;
+    if (elements.convertedPreviewText) {
+      elements.convertedPreviewText.style.fontFamily = chosen.family;
+    }
   }
 
   function escapeHtml(value) {
@@ -325,26 +597,152 @@ const hiSamples = [
 
   function getTypedForScoring() {
     const raw = elements.typingInput.value;
-    if (state.language === "hindi") {
+    if (state.language === "hindi" && state.hindiInputMethod === "phonetic") {
       return transliterateEnglishToHindi(raw);
     }
+    // Kruti Dev mode already builds real Devanagari text directly in the
+    // textarea (see handleKrutiKeydown), so it needs no further conversion.
     return raw;
   }
 
-  function renderTarget(typed) {
-    const chars = Array.from(state.target);
-    const typedChars = Array.from(typed);
-    const html = chars.map((char, index) => {
-      let className = "";
-      if (index < typedChars.length) {
-        className = typedChars[index] === char ? "correct" : "incorrect";
-      } else if (index === typedChars.length) {
-        className = "current";
-      }
-      return `<span class="${className}">${escapeHtml(char)}</span>`;
-    }).join("");
-    elements.targetDisplay.innerHTML = html;
+  // Inserts a resolved Devanagari character/cluster at the cursor. When
+  // `preBase` is true (the i-matra key), the character is held back and
+  // combined with the very next consonant, in the correct Unicode order,
+  // instead of being inserted immediately.
+  function insertKrutiChar(char, preBase) {
+    if (preBase) {
+      state.kdPendingPreBase = char;
+      return;
+    }
+    const el = elements.typingInput;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const text = state.kdPendingPreBase ? char + state.kdPendingPreBase : char;
+    state.kdPendingPreBase = "";
+    el.value = el.value.slice(0, start) + text + el.value.slice(end);
+    const cursor = start + text.length;
+    el.setSelectionRange(cursor, cursor);
+    updateStats();
   }
+
+  function flushKrutiPreBase() {
+    if (!state.kdPendingPreBase) {
+      return;
+    }
+    const el = elements.typingInput;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    el.value = el.value.slice(0, start) + state.kdPendingPreBase + el.value.slice(end);
+    const cursor = start + state.kdPendingPreBase.length;
+    el.setSelectionRange(cursor, cursor);
+    state.kdPendingPreBase = "";
+    updateStats();
+  }
+
+  const KRUTI_PASSTHROUGH_KEYS = new Set([
+    "Backspace", "Delete", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown",
+    "Tab", "Home", "End", "Enter"
+  ]);
+
+  // Intercepts physical key presses and maps them through the Kruti Dev /
+  // Remington key layout instead of letting the browser insert the raw
+  // Latin letter, so the textarea always holds real, correctly ordered
+  // Unicode Devanagari text.
+  function handleKrutiKeydown(event) {
+    if (state.language !== "hindi" || state.hindiInputMethod !== "krutidev") {
+      return;
+    }
+    if (event.ctrlKey || event.metaKey || event.altKey) {
+      return;
+    }
+    if (KRUTI_PASSTHROUGH_KEYS.has(event.key)) {
+      if (event.key === "Backspace") {
+        state.kdPendingPreBase = "";
+      }
+      return;
+    }
+    if (event.key === " ") {
+      flushKrutiPreBase();
+      return;
+    }
+    if (event.key.length !== 1) {
+      return;
+    }
+    const mapping = KRUTI_KEYMAP[event.key.toLowerCase()];
+    if (!mapping) {
+      event.preventDefault();
+      return;
+    }
+    event.preventDefault();
+    const char = event.shiftKey ? mapping.shift : mapping.base;
+    if (!char) {
+      return;
+    }
+    insertKrutiChar(char, Boolean(mapping.preBase && !event.shiftKey));
+  }
+
+  function renderTarget(typed) {
+  const chars = Array.from(state.target);
+  const typedChars = Array.from(typed);
+
+  const html = chars.map((char, index) => {
+    let className = "";
+
+    if (index < typedChars.length) {
+      className = typedChars[index] === char ? "correct" : "incorrect";
+    } else if (index === typedChars.length) {
+      className = "current";
+    }
+
+    return `<span class="${className}">${escapeHtml(char)}</span>`;
+  }).join("");
+
+  elements.targetDisplay.innerHTML = html;
+
+  // Initial state: always show paragraph from the beginning
+  if (!state.active && typedChars.length === 0) {
+    elements.targetDisplay.scrollTop = 0;
+    return;
+  }
+
+  scrollTargetToCurrent();
+}
+
+
+function scrollTargetToCurrent() {
+  const container = elements.targetDisplay;
+  const currentEl = container.querySelector(".current");
+
+  if (!currentEl) {
+    return;
+  }
+
+  const containerRect = container.getBoundingClientRect();
+  const currentRect = currentEl.getBoundingClientRect();
+
+  // Current line is already visible.
+  // Don't unnecessarily move the paragraph.
+  const topMargin = 25;
+  const bottomMargin = 35;
+
+  if (
+    currentRect.top >= containerRect.top + topMargin &&
+    currentRect.bottom <= containerRect.bottom - bottomMargin
+  ) {
+    return;
+  }
+
+  // Only scroll when current text moves outside the comfortable area.
+  const targetScrollTop =
+    container.scrollTop +
+    (currentRect.top - containerRect.top) -
+    topMargin;
+
+  container.scrollTo({
+    top: Math.max(0, targetScrollTop),
+    behavior: "smooth"
+  });
+}
 
   function calculateStats() {
     const typed = getTypedForScoring();
@@ -373,12 +771,13 @@ const hiSamples = [
 
   function updateStats() {
     const stats = calculateStats();
+    extendTargetIfNeeded(Array.from(stats.typed).length);
     renderTarget(stats.typed);
     elements.wpmValue.textContent = String(stats.wpm);
     elements.accuracyValue.textContent = `${stats.accuracy}%`;
     elements.mistakeValue.textContent = String(stats.mistakes);
 
-    if (state.language === "hindi") {
+    if (state.language === "hindi" && state.hindiInputMethod === "phonetic") {
       elements.convertedPreviewText.textContent = stats.typed || "Hindi conversion will appear as you type roman Hindi.";
     }
 
@@ -393,18 +792,55 @@ const hiSamples = [
     return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   }
 
+  function updateHindiInputUi() {
+    const isHindi = state.language === "hindi";
+    const isKruti = isHindi && state.hindiInputMethod === "krutidev";
+    if (elements.hindiInputRow) {
+      elements.hindiInputRow.classList.toggle("hidden", !isHindi);
+    }
+    elements.convertedPreview.classList.toggle("hidden", !isHindi || isKruti);
+    if (elements.krutiLegend) {
+      elements.krutiLegend.classList.toggle("hidden", !isKruti);
+    }
+    if (isKruti) {
+      elements.typingInputLabel.textContent = "Type using Kruti Dev / Remington key positions";
+      elements.typingInput.placeholder = "Press physical keys per the Kruti Dev layout (see legend below)";
+    } else if (isHindi) {
+      elements.typingInputLabel.textContent = "Type in roman Hindi; it is converted for scoring";
+      elements.typingInput.placeholder = "Example: niyamit abhyas se typing ki gati...";
+    } else {
+      elements.typingInputLabel.textContent = "Type the text here";
+      elements.typingInput.placeholder = "";
+    }
+  }
+
+  function setHindiInputMethod(method) {
+    state.hindiInputMethod = method;
+    state.kdPendingPreBase = "";
+    if (elements.hindiInputMethod) {
+      elements.hindiInputMethod.value = method;
+    }
+    updateHindiInputUi();
+    resetTest(false);
+  }
+
   function setLanguage(language) {
     state.language = language;
-    state.sampleIndex = 0;
-    elements.convertedPreview.classList.toggle("hidden", language !== "hindi");
-    elements.typingInputLabel.textContent = language === "hindi"
-      ? "Type in roman Hindi; it is converted for scoring"
-      : "Type the text here";
-    elements.typingInput.placeholder = language === "hindi"
-      ? "Example: niyamit abhyas se typing ki gati..."
-      : "";
+    updateHindiInputUi();
+    populateFontOptions();
     resetTest(false);
-    chooseTarget(false);
+    chooseTarget(true);
+  }
+
+  function setDuration(seconds) {
+    state.duration = seconds;
+    if (elements.durationChips) {
+      Array.from(elements.durationChips.children).forEach((chip) => {
+        chip.classList.toggle("active", Number(chip.dataset.duration) === seconds);
+      });
+    }
+    resetTest(true);
+    chooseTarget(true);
   }
 
   function startTest() {
@@ -433,7 +869,6 @@ const hiSamples = [
   function resetTest(clearResult) {
     window.clearInterval(state.timerId);
     state.active = false;
-    state.duration = Number(elements.durationSelect.value);
     state.remaining = state.duration;
     state.startedAt = 0;
     state.timerId = null;
@@ -575,7 +1010,23 @@ const hiSamples = [
    * Typing Practice Module Event Listeners
    */
   elements.practiceLanguage.addEventListener("change", () => setLanguage(elements.practiceLanguage.value));
-  elements.durationSelect.addEventListener("change", () => resetTest(true));
+  elements.fontSelect.addEventListener("change", () => {
+    state.fontId = elements.fontSelect.value;
+    applyFont();
+  });
+  if (elements.hindiInputMethod) {
+    elements.hindiInputMethod.addEventListener("change", () => setHindiInputMethod(elements.hindiInputMethod.value));
+  }
+  if (elements.durationChips) {
+    elements.durationChips.addEventListener("click", (event) => {
+      const chip = event.target.closest(".duration-chip");
+      if (!chip) {
+        return;
+      }
+      setDuration(Number(chip.dataset.duration));
+    });
+  }
+  elements.typingInput.addEventListener("keydown", handleKrutiKeydown);
   elements.typingInput.addEventListener("input", updateStats);
   $("startBtn").addEventListener("click", startTest);
   $("resetBtn").addEventListener("click", () => resetTest(true));
@@ -593,7 +1044,6 @@ const hiSamples = [
     setMode("practice");
   }
   setLanguage("english");
-  chooseTarget(false);
   resetTest(true);
   renderHistory();
 }());

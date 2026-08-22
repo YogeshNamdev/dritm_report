@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600&family=Tiro+Devanagari+Hindi&family=Baloo+2:wght@500;700&family=Roboto+Mono:wght@400;600&family=Courier+Prime&family=Poppins:wght@400;600&display=swap');
+
 :root {
   --bg: #f4f7fb;
   --surface: #ffffff;
@@ -252,6 +254,56 @@ select {
   padding: 0 12px;
 }
 
+.duration-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.duration-label {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.duration-chips {
+  display: flex;
+  gap: 8px;
+  padding: 4px;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.duration-chip {
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text);
+  background: transparent;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.duration-chip:hover {
+  background: rgba(30, 111, 143, 0.12);
+}
+
+.duration-chip.active {
+  color: #ffffff;
+  background: var(--primary);
+}
+
+#textLengthHint {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 13px;
+}
+
 .stats-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -294,7 +346,9 @@ select {
 }
 
 .target-box {
-  min-height: 170px;
+  height: 132px;
+  overflow: hidden;
+  scroll-behavior: smooth;
   padding: 18px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -342,6 +396,38 @@ select {
   margin: 8px 0 0;
   color: var(--text);
   line-height: 1.6;
+}
+
+.kruti-legend {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f9fbfd;
+}
+
+.kruti-legend > span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.kruti-legend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 6px 10px;
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+.kruti-legend-grid span {
+  white-space: nowrap;
+}
+
+.kruti-legend-grid b {
+  display: inline-block;
+  min-width: 18px;
+  color: var(--primary);
 }
 
 .hidden {
@@ -425,6 +511,19 @@ select {
     flex: 1;
   }
 
+  .duration-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .duration-chips {
+    justify-content: space-between;
+  }
+
+  .duration-chip {
+    flex: 1;
+  }
+
   .converter-grid,
   .typing-layout,
   .stats-row {
@@ -464,4 +563,17 @@ select {
   .target-box {
     font-size: 18px;
   }
+}
+
+.app-footer {
+  margin-top: 24px;
+  padding: 16px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  border-top: 1px solid var(--line);
+}
+
+.app-footer strong {
+  color: var(--primary);
 }

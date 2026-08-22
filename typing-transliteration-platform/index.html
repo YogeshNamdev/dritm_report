@@ -74,14 +74,30 @@
             </select>
           </label>
           <label>
-            <span>Duration</span>
-            <select id="durationSelect">
-              <option value="60">1 min</option>
-              <option value="120">2 min</option>
-              <option value="300">5 min</option>
-            </select>
+            <span>Font</span>
+            <select id="fontSelect"></select>
           </label>
         </div>
+      </div>
+
+      <div class="duration-row" aria-label="Select test duration">
+        <span class="duration-label">Duration</span>
+        <div class="duration-chips" id="durationChips" role="group" aria-label="Typing test duration">
+          <button class="duration-chip" type="button" data-duration="60">1 min</button>
+          <button class="duration-chip active" type="button" data-duration="300">5 min</button>
+          <button class="duration-chip" type="button" data-duration="600">10 min</button>
+          <button class="duration-chip" type="button" data-duration="900">15 min</button>
+        </div>
+        <span class="status-line" id="textLengthHint"></span>
+      </div>
+
+      <div class="duration-row hidden" id="hindiInputRow" aria-label="Select Hindi typing method">
+        <span class="duration-label">Hindi input</span>
+        <select id="hindiInputMethod">
+          <option value="phonetic">Phonetic (Roman Hindi)</option>
+          <option value="krutidev">Kruti Dev (Remington key positions)</option>
+        </select>
+        <span class="status-line">Kruti Dev mode outputs real Unicode text using Remington key positions; verify against your own exam software if possible.</span>
       </div>
 
       <div class="stats-row" aria-label="Typing test statistics">
@@ -118,6 +134,14 @@
             <span>Converted Hindi input</span>
             <p id="convertedPreviewText"></p>
           </div>
+          <div class="kruti-legend hidden" id="krutiLegend">
+            <span>Kruti Dev key legend (no-shift / Shift)</span>
+            <div class="kruti-legend-grid">
+              <span><b>Q</b> ृ/त्</span><span><b>W</b> —/ऊ</span><span><b>E</b> म/म्</span><span><b>R</b> त/त्र</span><span><b>T</b> ज/ज्</span><span><b>Y</b> ल/ल्</span><span><b>U</b> न/न्</span><span><b>I</b> प/प्</span><span><b>O</b> व/व्</span><span><b>P</b> च/च्</span><span><b>[</b> ख/क्ष</span><span><b>]</b> ,/ै</span>
+              <span><b>A</b> ं/ष्</span><span><b>S</b> ्/श</span><span><b>D</b> क/क़</span><span><b>F</b> ि/ई</span><span><b>G</b> ह/ळ</span><span><b>H</b> ी/भ</span><span><b>J</b> र/श्र</span><span><b>K</b> ा/ज्ञ</span><span><b>L</b> स/स्</span><span><b>;</b> य/रू</span><span><b>'</b> श/ठ</span>
+              <span><b>Z</b> —/र्</span><span><b>X</b> ग/ग्</span><span><b>C</b> ब/ब्</span><span><b>V</b> अ/ट</span><span><b>B</b> इ/ठ</span><span><b>N</b> द/छ</span><span><b>M</b> उ/ड</span><span><b>,</b> ए/ढ</span><span><b>.</b> ण/झ</span><span><b>/</b> ङ/घ</span>
+            </div>
+          </div>
           <div class="actions">
             <button class="primary-btn" type="button" id="startBtn">Start Test</button>
             <button class="secondary-btn" type="button" id="newTextBtn">New Text</button>
@@ -139,7 +163,9 @@
       </div>
     </section>
   </main>
-
+<footer class="app-footer">
+  <span>AksharLab</span> · Developed & Maintained by <strong>Yogesh Namdev</strong>
+</footer>
   <script src="app.js"></script>
 </body>
 </html>

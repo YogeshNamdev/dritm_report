@@ -638,6 +638,31 @@ class Reports extends CI_Controller {
         echo json_encode($data);
     }
 
+    public function get_all_owa_details_old()
+    {
+        $data = array();
+        if($this->input->is_ajax_request())
+        {
+        $start_date = $this->input->post('start_date');
+        $end_date = $this->input->post('end_date');
+        $agent_id = $this->input->post('agent_id');
+        $r = $this->Report_m->get_all_owa_details_old($start_date, $end_date , $agent_id);
+        if($r != FALSE)
+            {
+            $data["response"] = TRUE;
+            $data["message"] = count($r)." Record Found.";
+            $data["total_record"] = count($r);
+            $data["all_record"] = $r;
+            }
+        else
+            {
+            $data["response"] = FALSE;
+            $data["message"] = "No Record Found.";
+            }
+        }
+        echo json_encode($data);
+    }
+
     public function get_all_callback_details()
     {
         if(!$this->is_allowed($this->agent_report_roles)) { return $this->deny_json(); }
@@ -2270,5 +2295,290 @@ public function add_details_of_direction_resolutions()
         }
         echo json_encode($data);
     }
+
+    public function correctIncorrectDataAssign($page = "list"){
+        $data = array();
+		if(!file_exists(APPPATH.'views/reports/CorrectIncorrectDataAssign/'.$page.'.php'))
+		{
+		show_404();
+		}
+        $data["user_list"] = $this->Report_m->get_all_user_list();
+        
+		$data["title"] = "Correct Incorrect Data Assign";
+		$this->load->view('app/templates/header' , $data);
+		$this->load->view('app/templates/side_panel' , $data);
+		$this->load->view('reports/CorrectIncorrectDataAssign/'.$page , $data);
+		$this->load->view('app/templates/footer' , $data);
+    }
+
+    public function correct_incorrect_data_assign()
+    {
+        if ($this->input->post()) {
+
+            $number    = (int) $this->input->post('number');
+            $agent_ids = $this->input->post('agent_id'); // array of emp_id
+            $date      = $this->input->post('date');      // yyyy-mm-dd ya empty
+
+            // Validation
+            if ($number <= 0) {
+                echo json_encode(['response' => FALSE, 'message' => 'Invalid number.']);
+                return;
+            }
+            if (empty($agent_ids) || !is_array($agent_ids)) {
+                echo json_encode(['response' => FALSE, 'message' => 'Select at least one agent.']);
+                return;
+            }
+
+            // ---- Date ko SP wale format (dd/mm/yyyy) me convert karo ----
+            $date = $this->input->post('date'); // yyyy-mm-dd ya empty
+
+// ---- Date ko SP wale format (dd/mm/yyyy) me convert karo ----
+        $sp_date = NULL;
+        if (!empty($date)) {
+            $date_obj = DateTime::createFromFormat('Y-m-d', $date);
+            if ($date_obj !== FALSE) {
+                $sp_date = $date_obj->format('d/m/Y'); // e.g. 18/08/2026
+            }
+        }
+                
+                $r = $this->Report_m->correct_incorrect_data_assign(
+                    $this->current_role_id(),
+                    $this->current_emp_id(),
+                    $number,
+                    $sp_date,
+                    $agent_ids
+                );
+
+                echo json_encode($r);
+            }
+        }
+
+    public function today_assign_incorrect_data($page = "assigndata"){
+        $data = array();
+		if(!file_exists(APPPATH.'views/reports/CorrectIncorrectDataAssign/'.$page.'.php'))
+		{
+		show_404();
+		}
+        $data["user_list"] = $this->Report_m->get_all_user_list();
+        
+		$data["title"] = "Correct Incorrect Data Assign";
+		$this->load->view('app/templates/header' , $data);
+		$this->load->view('app/templates/side_panel' , $data);
+		$this->load->view('reports/CorrectIncorrectDataAssign/'.$page , $data);
+		$this->load->view('app/templates/footer' , $data);
+    }
+
+    public function today_assign_data()
+    {
+        $filter_date = $this->input->post('filter_date');
+
+        $r = $this->Report_m->today_assign_data(
+            $this->current_role_id(),
+            $this->current_emp_id(),
+            $filter_date
+        );
+
+        echo json_encode($r);
+    }
+
+public function update_assign_data()
+{
+    $id = $this->input->post('id');
+
+    if (empty($id)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid row ID']);
+        return;
+    }
+
+    $row = $this->Report_m->get_assign_row($id);
+
+    if (!$row) {
+        echo json_encode(['status' => 'error', 'message' => 'Record nahi mila']);
+        return;
+    }
+
+    // created_at se sirf date nikaalo (datetime format: YYYY-MM-DD HH:MM:SS)
+    $assigned_date = date('Y-m-d', strtotime($row->created_at));
+    $today         = date('Y-m-d');
+
+    if ($assigned_date != $today) {
+        echo json_encode([
+            'status'  => 'error',
+            'message' => 'Yeh complaint ' . $assigned_date . ' ko assign hui thi, aaj update nahi ho sakti'
+        ]);
+        return;
+    }
+
+    $correct_incorrect  = $this->input->post('correct_incorrect');
+    $description_error  = $this->input->post('description_error');
+    $remark             = $this->input->post('remark');
+
+    $data = [
+        'correct_incorrect' => $correct_incorrect,
+        'description_error' => $description_error,
+        'remark'             => $remark,
+        'update_at'          => date('Y-m-d H:i:s')
+    ];
+
+    $updated = $this->Report_m->update_assign_data($id, $data);
+
+    echo json_encode([
+        'status'  => $updated ? 'success' : 'error',
+        'message' => $updated ? 'Row update ho gayi' : 'Update fail ho gaya, dobara try karein'
+    ]);
+}
+
+
+    public function complaint_details()
+{
+    if (!$this->input->post()) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid request']);
+        return;
+    }
+
+    $compId = (int) $this->input->post('compId');
+
+    if (empty($compId)) {
+        echo json_encode(['status' => 'error', 'message' => 'Complaint ID invalid hai']);
+        return;
+    }
+
+    $res = $this->Report_m->get_complaint_details($compId);
+
+    if ($res === FALSE) {
+        echo json_encode(['status' => 'error', 'message' => 'Complaint details nahi mila']);
+        return;
+    }
+
+    echo json_encode([
+        'status'       => 'success',
+        'details'      => $res['details'],
+        'summary'      => $res['summary'],
+        'area_details' => $res['area_details']
+    ]);
+}
+
+public function get_tl_list()
+{
+    $filter_date = $this->input->post('filter_date');
+    $list = $this->Report_m->get_active_tl_list($filter_date);
+    echo json_encode($list);
+}
+
+public function admin_assign_data()
+{
+    // Sirf admin (role_id == 1) hi is endpoint ko use kar sakta hai
+    if (($_SESSION['userdata']['role_id'] ?? null) != 1) {
+        echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+        return;
+    }
+
+    $filter_date = $this->input->post('filter_date');
+    $tl_name     = $this->input->post('tl_name');
+
+    $rows = $this->Report_m->admin_assign_data($filter_date, $tl_name);
+    echo json_encode($rows);
+}
+
+// public function update_tl_status()
+// {
+//     if (($_SESSION['userdata']['role_id'] ?? null) != 1) {
+//         echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+//         return;
+//     }
+
+//     $id = $this->input->post('id');
+//     $tl_status = $this->input->post('tl_status');
+
+//     if (empty($id) || empty($tl_status)) {
+//         echo json_encode(['status' => 'error', 'message' => 'Invalid data']);
+//         return;
+//     }
+
+//     // ⚠️ Confirm karo: admin ka naam session me kis key me store hai (name / emp_name / username)
+//     $admin_name = $_SESSION['userdata']['user_name'] ?? ($_SESSION['userdata']['user_name'] ?? 'Admin');
+
+//     $data = [
+//         'tl_status'       => $tl_status,
+//         'given_tl_status' => $admin_name,
+//         'tl_update_at'    => date('Y-m-d H:i:s')
+//     ];
+
+//     $updated = $this->Report_m->update_tl_status($id, $data);
+
+//     echo json_encode([
+//         'status'  => $updated ? 'success' : 'error',
+//         'message' => $updated ? 'TL status update ho gaya' : 'Update fail ho gaya, dobara try karein'
+//     ]);
+// }
+
+public function update_tl_status()
+{
+    if (($_SESSION['userdata']['role_id'] ?? null) != 1) {
+        echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+        return;
+    }
+
+    $id            = $this->input->post('id');
+    $tl_status     = $this->input->post('tl_status');
+    $given_tl_name = $this->input->post('given_tl_name'); // upar dropdown se selected TL
+
+    if (empty($id) || empty($tl_status)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid data']);
+        return;
+    }
+
+    // Agar TL dropdown se koi naam selected hai to wahi save hoga.
+    // Agar kuch bhi selected nahi hai, to current logged-in admin ka apna naam fallback ban jaega.
+    $admin_name = !empty($given_tl_name)
+        ? $given_tl_name
+        : ($_SESSION['userdata']['user_name'] ?? 'Admin');
+
+    $data = [
+        'tl_status'       => $tl_status,
+        'given_tl_status' => $admin_name,
+        'tl_update_at'    => date('Y-m-d H:i:s')
+    ];
+
+    $updated = $this->Report_m->update_tl_status($id, $data);
+
+    echo json_encode([
+        'status'  => $updated ? 'success' : 'error',
+        'message' => $updated ? 'TL status update ho gaya' : 'Update fail ho gaya, dobara try karein'
+    ]);
+}
+
+
+public function assign_summary()
+{
+    $from_date = $this->input->post('from_date');
+    $to_date   = $this->input->post('to_date');
+
+    $rows = $this->Report_m->get_assign_summary($from_date, $to_date);
+
+    // Har date ka total (us din sabhi agents milaake kitna assign hua)
+    $day_totals = array();
+    foreach ($rows as $r) {
+        $date = $r->assign_date;
+        if (!isset($day_totals[$date])) {
+            $day_totals[$date] = 0;
+        }
+        $day_totals[$date] += (int) $r->day_count;
+    }
+
+    $result = array();
+    foreach ($rows as $r) {
+        $result[] = array(
+            'assign_date' => $r->assign_date,
+            'emp_id'      => $r->assigned_to_emp_id,
+            'agent_name'  => $r->user_name,
+            'msd_id'      => $r->msd_id,
+            'count'       => (int) $r->day_count,
+            'day_total'   => $day_totals[$r->assign_date]
+        );
+    }
+
+    echo json_encode($result);
+}
 
 }

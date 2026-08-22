@@ -1,4 +1,7 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL); 
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Report_m extends CI_Model {
@@ -824,6 +827,64 @@ public function update_copypaste_resolutions($update_arr, $id)
 			");
 
 			$this->db->from('owa_report t1');
+
+			$this->db->join('master_users t2', 't1.agent_id = t2.emp_id', 'left');
+			$this->db->join('department t3', 't1.new_department = t3.Departid', 'left');
+			$this->db->join('department t4', 't1.old_department = t4.Departid', 'left');
+			$this->db->join('complaintattrib t5', 't1.old_attribute = t5.attribID', 'left');
+			$this->db->join('complaintattrib t6', 't1.new_attribute = t6.attribID', 'left');
+
+			$this->db->where('t1.status', 1);
+
+			// Start Date Condition
+			if(!empty($start_date))
+			{
+				$this->db->where('DATE(t1.added_at) >=', $start_date);
+			}
+
+			// End Date Condition
+			if(!empty($end_date))
+			{
+				$this->db->where('DATE(t1.added_at) <=', $end_date);
+			}
+
+			// Agent Condition
+			if(!empty($agent_id) && $agent_id != 0)
+			{
+				$this->db->where('t1.added_by', $agent_id);
+			}
+
+			$this->db->order_by('t1.id', 'DESC');
+
+			$r = $this->db->get();
+
+			if($r->num_rows() > 0)
+			{
+				return $r->result();
+			}
+			else
+			{
+				return FALSE;
+    }
+}
+
+public function get_all_owa_details_old($start_date = null, $end_date = null, $agent_id = 0)
+		{
+			$this->db->select("
+				t1.*, 
+				t2.user_name, 
+				t2.msd_id, 
+				t3.Departid AS new_department_id, 
+				t3.Departname_E AS new_department_name, 
+				t4.Departid AS old_department_id, 
+				t4.Departname_E AS old_department_name, 
+				t5.attribID AS old_attribute_id, 
+				t5.attribname_E AS old_attribute_name, 
+				t6.attribID AS new_attribute_id, 
+				t6.attribname_E AS new_attribute_name
+			");
+
+			$this->db->from('owa_report_22-08-2026 t1');
 
 			$this->db->join('master_users t2', 't1.agent_id = t2.emp_id', 'left');
 			$this->db->join('department t3', 't1.new_department = t3.Departid', 'left');
@@ -1924,21 +1985,21 @@ public function update_copypaste_resolutions($update_arr, $id)
 
 		public function get_number_change_reports($role_id, $emp_id)
 		{
-		$this->db->select("t1.*, agent.user_name as agent_name, agent.msd_id as agent_msd_id, creator.user_name as created_by_name");
-		$this->db->from("number_change_requests t1");
-		$this->db->join("master_users agent", "t1.added_by = agent.emp_id", "left");
-		$this->db->join("master_users creator", "t1.added_by = creator.emp_id", "left");
-		$this->db->where("t1.status", 1);
-		// if((int)$role_id !== 1)
-		// {
-		// 	$this->db->group_start();
-		// 	$this->db->where("t1.agent_id", $emp_id);
-		// 	$this->db->or_where("t1.created_by", $emp_id);
-		// 	$this->db->group_end();
-		// }
-		$this->db->order_by("t1.added_at", "DESC");
-		$r = $this->db->get();
-		if($r->num_rows() > 0){ return $r->result(); }else{ return FALSE; }
+			$this->db->select("t1.*, agent.user_name as agent_name, agent.msd_id as agent_msd_id, creator.user_name as created_by_name");
+			$this->db->from("number_change_requests t1");
+			$this->db->join("master_users agent", "t1.added_by = agent.emp_id", "left");
+			$this->db->join("master_users creator", "t1.added_by = creator.emp_id", "left");
+			$this->db->where("t1.status", 1);
+			// if((int)$role_id !== 1)
+			// {
+			// 	$this->db->group_start();
+			// 	$this->db->where("t1.agent_id", $emp_id);
+			// 	$this->db->or_where("t1.created_by", $emp_id);
+			// 	$this->db->group_end();
+			// }
+			$this->db->order_by("t1.added_at", "DESC");
+			$r = $this->db->get();
+			if($r->num_rows() > 0){ return $r->result(); }else{ return FALSE; }
 		}
 
 		public function update_number_change_detail($update_arr, $id)
@@ -1947,5 +2008,326 @@ public function update_copypaste_resolutions($update_arr, $id)
 			$this->db->update("number_change_requests" , $update_arr);
 			return $this->db->affected_rows();
 		}
+
+		public function correct_incorrect_data_assign($role_id, $emp_id, $number, $date, $agent_ids)
+		{
+			$live = $this->live_db();
+
+			// ---- Manually build query with proper escaping (placeholder ki jagah) ----
+			$number_safe = (int) $number;
+
+			if (!empty($date)) {
+				$date_safe = $live->escape($date); // ye automatically quotes bhi laga dega: '18/08/2026'
+				$sql = "CALL sp_adv3_new1($date_safe, $number_safe)";
+			} else {
+				$sql = "CALL sp_adv3_new1(NULL, $number_safe)";
+			}
+
+			$query = $live->query($sql);
+
+			// ---- Yahan turant check karo query fail to nahi hui ----
+			if ($query === FALSE) {
+				$error = $live->error(); // array with 'code' and 'message'
+				log_message('error', 'SP Error: ' . print_r($error, true));
+				return ['response' => FALSE, 'message' => 'DB Error: ' . $error['message']];
+			}
+
+			$records = $query->result();
+
+			// ---- Extra result sets clear karo (procedure status) ----
+			while ($live->conn_id->more_results() && $live->conn_id->next_result()) {
+				if ($extra = $live->conn_id->store_result()) {
+					$extra->free();
+				}
+			}
+
+			if (empty($records)) {
+				return ['response' => FALSE, 'message' => 'No data found from procedure.'];
+			}
+
+			// ---- Round-robin equal distribution ----
+			$total_agents = count($agent_ids);
+			$batch_id     = date('YmdHis') . '_' . $emp_id;
+
+			$filter_date_value = NULL;
+			if (!empty($date)) {
+				$date_obj = DateTime::createFromFormat('d/m/Y', $date);
+				if ($date_obj !== FALSE) {
+					$filter_date_value = $date_obj->format('Y-m-d');
+				}
+			}
+
+			$insert_data = [];
+			foreach ($records as $index => $row) {
+				$assigned_to = $agent_ids[$index % $total_agents];
+
+				$insert_data[] = [
+					'batch_id'              => $batch_id,
+					'compid'                => $row->compid,
+					'compdate'              => !empty($row->compdate) ? date('Y-m-d', strtotime($row->compdate)) : NULL,
+					'created_by_agent_id'   => $row->agent_id,
+					'assigned_to_emp_id'    => $assigned_to,
+					'phone'                 => $row->Phone,
+					'tl_name'               => $row->{'TL Name'} ?? null,
+					// 'dept'                  => $row->Dept,
+					// 'ca'                    => $row->CA,
+					// 'compremarks'           => $row->compremarks,
+					'filter_date'           => $filter_date_value,
+				];
+			}
+
+			$this->db->insert_batch('tbl_correct_incorrect_assign', $insert_data);
+
+			$summary = [];
+			foreach ($insert_data as $d) {
+				$summary[$d['assigned_to_emp_id']] = ($summary[$d['assigned_to_emp_id']] ?? 0) + 1;
+			}
+
+			return [
+				'response'      => TRUE,
+				'batch_id'      => $batch_id,
+				'total_records' => count($insert_data),
+				'summary'       => $summary
+			];
+		}
+
+		public function today_assign_data($role_id, $emp_id, $filter_date = null)
+		{
+			$this->db->where('assigned_to_emp_id', $emp_id);
+
+			if (!empty($filter_date)) {
+				$this->db->where('created_at >=', $filter_date . ' 00:00:00');
+				$this->db->where('created_at <=', $filter_date . ' 23:59:59');
+			}
+
+			$this->db->order_by('compid', 'desc');
+			//$this->db->limit(10);
+
+			$rs = $this->db->get('tbl_correct_incorrect_assign');
+
+			return ($rs->num_rows() > 0) ? $rs->result() : [];
+		}
+
+public function update_assign_data($id, $data)
+{
+    $this->db->where('id', $id);
+    return $this->db->update('tbl_correct_incorrect_assign', $data);
+}
+public function get_assign_row($id)
+{
+    return $this->db->get_where('tbl_correct_incorrect_assign', ['id' => $id])->row();
+}
+
+
+
+// public function get_complaint_details($compid)
+// {
+//     $live = $this->live_db();
+
+//     // 1. First check in complaints table
+//     $live->select('
+//         c.*,
+//         d.Departname_E AS department_name,
+//         dist.District_Name_E AS district_name,
+//         om.officername AS current_officer_name,
+//         om.officerno AS current_officer_no,
+//         om.loginuserid AS current_officer_login
+//     ');
+
+//     $live->from('complaints c');
+
+//     $live->join(
+//         'department d',
+//         'c.compdepart = d.Departid',
+//         'left'
+//     );
+
+//     $live->join(
+//         'district dist',
+//         'c.callerdistcode = dist.District_Code',
+//         'left'
+//     );
+
+//     $live->join(
+//         'officermaster om',
+//         'c.officerid = om.officerid',
+//         'left'
+//     );
+
+//     $live->where('c.compid', $compid);
+
+//     $query = $live->get();
+
+//     // Record found in complaints
+//     if ($query !== false && $query->num_rows() > 0) {
+//         return $query->result();
+//     }
+
+
+//     // 2. If not found, check in cls_complaints
+//     $live->select('
+//         c.*,
+//         d.Departname_E AS department_name,
+//         dist.District_Name_E AS district_name,
+//         om.officername AS current_officer_name,
+//         om.officerno AS current_officer_no,
+//         om.loginuserid AS current_officer_login
+//     ');
+
+//     $live->from('cls_complaints c');
+
+//     $live->join(
+//         'department d',
+//         'c.compdepart = d.Departid',
+//         'left'
+//     );
+
+//     $live->join(
+//         'district dist',
+//         'c.callerdistcode = dist.District_Code',
+//         'left'
+//     );
+
+//     $live->join(
+//         'officermaster om',
+//         'c.officerid = om.officerid',
+//         'left'
+//     );
+
+//     $live->where('c.compid', $compid);
+
+//     $query = $live->get();
+
+//     // Record found in cls_complaints
+//     if ($query !== false && $query->num_rows() > 0) {
+//         return $query->result();
+//     }
+
+//     // Not found in either table
+//     return false;
+// }
+
+public function get_complaint_details($compId)
+{
+    $live = $this->live_db();
+
+    // ---- Procedure 1: Complaint ki poori detail ----
+    $query = $live->query("CALL GetComplaintByCompid(?)", array($compId));
+    $details = $query ? $query->row() : null;
+    $this->clear_mysql_procedure_result($live);
+
+    if (!$details) {
+        return FALSE;
+    }
+
+    // ---- Procedure 2: Date-wise remark/status summary ----
+    $query2 = $live->query("CALL GETCOMPLAINTSUMMARY(?)", array($compId));
+    $summary = $query2 ? $query2->result() : array();
+    $this->clear_mysql_procedure_result($live);   // <-- yeh line missing thi, ab add ki
+
+    // ---- Procedure 3: Area details ----
+    $query3 = $live->query("CALL getAddressByCompid(?)", array($compId));
+    $area_details = $query3 ? $query3->result() : array();
+    $this->clear_mysql_procedure_result($live);
+
+    return array(
+        'details'      => $details,
+        'summary'      => $summary,
+        'area_details' => $area_details
+    );
+}
+
+// Ab yeh function connection accept karega, sirf $this->db par fix nahi rahega
+private function clear_mysql_procedure_result($db_conn)
+{
+    $conn = $db_conn->conn_id;
+
+    if ($conn instanceof mysqli) {
+        while ($conn->more_results() && $conn->next_result()) {
+            if ($res = $conn->store_result()) {
+                $res->free();
+            }
+        }
+    }
+}
+
+// Distinct TL list — jo TLs ke against data assign hua hai
+public function get_active_tl_list($filter_date = null)
+{
+    $this->db->distinct();
+    $this->db->select('tl_name');
+    $this->db->where('tl_name IS NOT NULL', null, false);
+    $this->db->where('tl_name !=', '');
+
+    if (!empty($filter_date)) {
+        $this->db->where('created_at >=', $filter_date . ' 00:00:00');
+        $this->db->where('created_at <=', $filter_date . ' 23:59:59');
+    }
+
+    $this->db->order_by('tl_name', 'asc');
+    return $this->db->get('tbl_correct_incorrect_assign')->result();
+}
+
+// Admin view — koi emp_id restriction nahi, sirf date + TL filter
+public function admin_assign_data($filter_date, $tl_name)
+{
+    if (!empty($filter_date)) {
+        $this->db->where('created_at >=', $filter_date . ' 00:00:00');
+        $this->db->where('created_at <=', $filter_date . ' 23:59:59');
+    }
+
+    if (!empty($tl_name)) {
+        $this->db->where('tl_name', $tl_name);
+    }
+
+    $this->db->order_by('compid', 'desc');
+    return $this->db->get('tbl_correct_incorrect_assign')->result();
+}
+
+// TL/Admin feedback save
+public function update_tl_status($id, $data)
+{
+    $this->db->where('id', $id);
+    return $this->db->update('tbl_correct_incorrect_assign', $data);
+}
+
+// Date-wise + agent-wise assign count. Agent ka naam employee master table se join hoga.
+public function get_assign_summary($from_date = null, $to_date = null)
+{
+    $this->db->select(
+        'DATE(t.created_at) AS assign_date,
+         t.assigned_to_emp_id,
+         e.user_name,
+         e.msd_id,
+         COUNT(t.id) AS day_count',
+        false
+    );
+
+    $this->db->from('tbl_correct_incorrect_assign t');
+
+    $this->db->join(
+        'master_users e',
+        'e.emp_id = t.assigned_to_emp_id',
+        'left'
+    );
+
+    if (!empty($from_date)) {
+        $this->db->where('t.created_at >=', $from_date . ' 00:00:00');
+    }
+
+    if (!empty($to_date)) {
+        $this->db->where('t.created_at <=', $to_date . ' 23:59:59');
+    }
+
+    $this->db->group_by([
+        'DATE(t.created_at)',
+        't.assigned_to_emp_id'
+    ]);
+
+    $this->db->order_by('assign_date', 'DESC');
+    $this->db->order_by('day_count', 'DESC');
+
+    return $this->db->get()->result();
+}
 
 }
