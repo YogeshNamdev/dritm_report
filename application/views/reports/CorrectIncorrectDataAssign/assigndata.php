@@ -21,7 +21,7 @@
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.5/dist/purify.min.js"></script>
 
 <script>
-function makeDataTable_Basic(tableID)
+function makeDataTable_Basic(tableID, savedPageLength)
  {
   var tableSelector = '#'+tableID;
 
@@ -36,7 +36,9 @@ function makeDataTable_Basic(tableID)
   return $(tableSelector).DataTable({
                         destroy: true,
                         ordering: true,
-                        dom: 'Bfrtip',
+                        lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, 'All']],
+                        pageLength: savedPageLength || 10,
+                        dom: 'Blfrtip',
                         buttons: [
                             'colvis',
                             { extend: 'print', exportOptions: { columns: ':not(.no-export)' }  },
@@ -534,9 +536,145 @@ function buildUpdateButton(createdAt) {
     return '<button type="button" class="btn btn-sm btn-secondary" disabled title="Sirf assign wale din hi update ho sakti hai"><i class="fas fa-lock mr-1"></i>Locked</button>';
 }
 
+// function renderAssignTable(rows) {
+
+//     if (assignDataTable) {
+//         assignDataTable.destroy();
+//         assignDataTable = null;
+//     }
+
+//     var $tbody = $('#assignDataBody');
+//     $tbody.empty();
+
+//     if (!rows || rows.length === 0) {
+//         if (CURRENT_ROLE_ID == 1) {
+//             $tbody.html('<tr><td colspan="10" class="text-center">No records found</td></tr>');
+//         } else {
+//             $tbody.html('<tr><td colspan="9" class="text-center">No records found</td></tr>');
+//         }
+        
+//         return;
+//     }
+
+//     var isAdmin = (CURRENT_ROLE_ID == 1);
+
+//     $.each(rows, function (i, row) {
+
+//         var $tr = $('<tr>').attr('data-id', row.id);
+
+//         $tr.append('<td>' + escapeHtml(row.compdate) + '</td>');
+//         $tr.append('<td class="text-primary" style="cursor:pointer; text-decoration:underline; font-weight:600;" onclick="viewComplaintDetails(this)">' + escapeHtml(row.compid) + '</td>');
+//         $tr.append('<td>' + escapeHtml(row.created_by_agent_id) + '</td>');
+//         $tr.append('<td>' + escapeHtml(row.phone) + '</td>');
+//         $tr.append('<td>' + escapeHtml(row.tl_name) + '</td>');
+
+//         if (isAdmin) {
+//             // ---- ADMIN: agent ka data sirf READ-ONLY dikhega, edit nahi hoga ----
+//             $tr.append('<td>' + (escapeHtml(row.correct_incorrect) || '<span class="text-muted">—</span>') + '</td>');
+//             $tr.append('<td>' + (escapeHtml(row.description_error) || '<span class="text-muted">—</span>') + '</td>');
+//            // NAYA:
+// $tr.append('<td>' + buildAdminRemarkCell(row.id, row.remark) + '</td>');
+
+//             // ---- Naye TL Feedback columns ----
+//             $tr.append(buildTlFeedbackCells(row));
+
+//         } else {
+//             // ---- AGENT: purana editable behavior waisa hi ----
+//             var isTodayRow = (getDateOnly(row.created_at) === getTodayDate());
+
+//             $tr.append('<td>' + buildFieldCell(correctIncorrectOptions, row.correct_incorrect, 'correct_incorrect_select', isTodayRow) + '</td>');
+//             $tr.append('<td>' + buildFieldCell(descriptionErrorOptions, row.description_error, 'description_error_select', isTodayRow) + '</td>');
+//             $tr.append('<td>' + buildRemarkButton(row.id, row.remark, '1') + '</td>');
+//             $tr.append('<td class="no-export">' + buildUpdateButton(row.created_at) + '</td>');
+//         }
+
+//         $tbody.append($tr);
+//     });
+
+//     assignDataTable = makeDataTable_Basic('assignDataTable');
+// }
+
+// function renderAssignTable(rows) {
+
+//     // ---- Naya: destroy karne se pehle current page number yaad rakho ----
+//     var savedPageIndex = 0;
+//     if (assignDataTable) {
+//         try {
+//             savedPageIndex = assignDataTable.page.info().page; // 0-based page number
+//         } catch (e) {
+//             savedPageIndex = 0;
+//         }
+//         assignDataTable.destroy();
+//         assignDataTable = null;
+//     }
+
+//     var $tbody = $('#assignDataBody');
+//     $tbody.empty();
+
+//     if (!rows || rows.length === 0) {
+//         if (CURRENT_ROLE_ID == 1) {
+//             $tbody.html('<tr><td colspan="10" class="text-center">No records found</td></tr>');
+//         } else {
+//             $tbody.html('<tr><td colspan="9" class="text-center">No records found</td></tr>');
+//         }
+//         return;
+//     }
+
+//     var isAdmin = (CURRENT_ROLE_ID == 1);
+
+//     $.each(rows, function (i, row) {
+
+//         var $tr = $('<tr>').attr('data-id', row.id);
+
+//         $tr.append('<td>' + escapeHtml(row.compdate) + '</td>');
+//         $tr.append('<td class="text-primary" style="cursor:pointer; text-decoration:underline; font-weight:600;" onclick="viewComplaintDetails(this)">' + escapeHtml(row.compid) + '</td>');
+//         $tr.append('<td>' + escapeHtml(row.created_by_agent_id) + '</td>');
+//         $tr.append('<td>' + escapeHtml(row.phone) + '</td>');
+//         $tr.append('<td>' + escapeHtml(row.tl_name) + '</td>');
+
+//         if (isAdmin) {
+//             $tr.append('<td>' + (escapeHtml(row.correct_incorrect) || '<span class="text-muted">—</span>') + '</td>');
+//             $tr.append('<td>' + (escapeHtml(row.description_error) || '<span class="text-muted">—</span>') + '</td>');
+//             $tr.append('<td>' + buildAdminRemarkCell(row.id, row.remark) + '</td>');
+//             $tr.append(buildTlFeedbackCells(row));
+//         } else {
+//             var isTodayRow = (getDateOnly(row.created_at) === getTodayDate());
+
+//             $tr.append('<td>' + buildFieldCell(correctIncorrectOptions, row.correct_incorrect, 'correct_incorrect_select', isTodayRow) + '</td>');
+//             $tr.append('<td>' + buildFieldCell(descriptionErrorOptions, row.description_error, 'description_error_select', isTodayRow) + '</td>');
+//             $tr.append('<td>' + buildRemarkButton(row.id, row.remark, '1') + '</td>');
+//             $tr.append('<td class="no-export">' + buildUpdateButton(row.created_at) + '</td>');
+//         }
+
+//         $tbody.append($tr);
+//     });
+
+//     assignDataTable = makeDataTable_Basic('assignDataTable');
+
+//     // ---- Naya: table ban jaane ke baad, wahi purana page restore karo ----
+//     if (assignDataTable) {
+//         var totalPages = assignDataTable.page.info().pages;
+//         var targetPage = Math.min(savedPageIndex, Math.max(totalPages - 1, 0));
+
+//         // draw(false) -> paging reset nahi karega, sirf display refresh karega
+//         assignDataTable.page(targetPage).draw(false);
+//     }
+// }
+
 function renderAssignTable(rows) {
 
+    // ---- Naya: destroy karne se pehle current page number AUR page length yaad rakho ----
+    var savedPageIndex = 0;
+    var savedPageLength = 10;
+
     if (assignDataTable) {
+        try {
+            savedPageIndex = assignDataTable.page.info().page; // 0-based page number
+            savedPageLength = assignDataTable.page.len(); // current page length (10/20/50/100/-1)
+        } catch (e) {
+            savedPageIndex = 0;
+            savedPageLength = 10;
+        }
         assignDataTable.destroy();
         assignDataTable = null;
     }
@@ -550,7 +688,6 @@ function renderAssignTable(rows) {
         } else {
             $tbody.html('<tr><td colspan="9" class="text-center">No records found</td></tr>');
         }
-        
         return;
     }
 
@@ -567,17 +704,11 @@ function renderAssignTable(rows) {
         $tr.append('<td>' + escapeHtml(row.tl_name) + '</td>');
 
         if (isAdmin) {
-            // ---- ADMIN: agent ka data sirf READ-ONLY dikhega, edit nahi hoga ----
             $tr.append('<td>' + (escapeHtml(row.correct_incorrect) || '<span class="text-muted">—</span>') + '</td>');
             $tr.append('<td>' + (escapeHtml(row.description_error) || '<span class="text-muted">—</span>') + '</td>');
-           // NAYA:
-$tr.append('<td>' + buildAdminRemarkCell(row.id, row.remark) + '</td>');
-
-            // ---- Naye TL Feedback columns ----
+            $tr.append('<td>' + buildAdminRemarkCell(row.id, row.remark) + '</td>');
             $tr.append(buildTlFeedbackCells(row));
-
         } else {
-            // ---- AGENT: purana editable behavior waisa hi ----
             var isTodayRow = (getDateOnly(row.created_at) === getTodayDate());
 
             $tr.append('<td>' + buildFieldCell(correctIncorrectOptions, row.correct_incorrect, 'correct_incorrect_select', isTodayRow) + '</td>');
@@ -589,7 +720,16 @@ $tr.append('<td>' + buildAdminRemarkCell(row.id, row.remark) + '</td>');
         $tbody.append($tr);
     });
 
-    assignDataTable = makeDataTable_Basic('assignDataTable');
+    // ---- Naya: saved page length pass karo table banate waqt ----
+    assignDataTable = makeDataTable_Basic('assignDataTable', savedPageLength);
+
+    // ---- Purana page number restore karo ----
+    if (assignDataTable) {
+        var totalPages = assignDataTable.page.info().pages;
+        var targetPage = Math.min(savedPageIndex, Math.max(totalPages - 1, 0));
+
+        assignDataTable.page(targetPage).draw(false);
+    }
 }
 
 function buildTlFeedbackCells(row) {
@@ -744,7 +884,7 @@ function renderComplaintDetailModal(d, summary, areaDetails) {
          + '<div class="cd-info-value">' + getPriorityBadge(d.StatusRemark) + '</div></div>';
 
     html += cdField('Medium', d.medium);
-    //html += cdField('City', d.CallerCityName);
+    html += cdField('Address', d.streetAddress);
     //html += cdField('CM Helpline ID', d.CID);
     html += '</div>';
 
