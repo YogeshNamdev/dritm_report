@@ -2581,4 +2581,99 @@ public function assign_summary()
     echo json_encode($result);
 }
 
+public function export_report()
+{
+    $type      = $this->input->post('type');
+    $from_date = $this->input->post('from_date');
+    $to_date   = $this->input->post('to_date');
+
+    if (empty($from_date) || empty($to_date)) {
+        show_error('From date and To date are required.', 400);
+        return;
+    }
+
+    $from = $from_date . ' 00:00:00';
+    $to   = $to_date . ' 23:59:59';
+
+    switch ($type) {
+
+        case 'breakdown':
+            $filename = 'Correct_Incorrect_Breakdown_' . date('Ymd_His') . '.csv';
+            $headers  = ['Correct/Incorrect', 'Description Error', 'Total Count'];
+            $this->db->select('correct_incorrect, description_error, COUNT(*) AS total_count', FALSE);
+            $this->db->from('tbl_correct_incorrect_assign');
+            $this->db->where('created_at >=', $from);
+            $this->db->where('created_at <=', $to);
+            $this->db->group_by('correct_incorrect, description_error');
+            $this->db->order_by('correct_incorrect', 'ASC');
+            $this->db->order_by('total_count', 'DESC');
+            $rows = $this->db->get()->result_array();
+            break;
+
+        case 'summary':
+            $filename = 'Top_Level_Summary_' . date('Ymd_His') . '.csv';
+            $headers  = ['Correct/Incorrect', 'Total Count'];
+            $this->db->select('correct_incorrect, COUNT(*) AS total_count', FALSE);
+            $this->db->from('tbl_correct_incorrect_assign');
+            $this->db->where('created_at >=', $from);
+            $this->db->where('created_at <=', $to);
+            $this->db->group_by('correct_incorrect');
+            $this->db->order_by('total_count', 'DESC');
+            $rows = $this->db->get()->result_array();
+            break;
+
+        case 'match_percent':
+            $filename = 'Match_Mismatch_Percent_' . date('Ymd_His') . '.csv';
+            $headers  = ['Total Reviewed', 'Matched Count', 'Mismatched Count', 'Agreement %'];
+            $sql = "SELECT
+                        COUNT(*) AS total_reviewed,
+                        SUM(CASE WHEN correct_incorrect = tl_status THEN 1 ELSE 0 END) AS matched_count,
+                        SUM(CASE WHEN correct_incorrect != tl_status THEN 1 ELSE 0 END) AS mismatched_count,
+                        ROUND(SUM(CASE WHEN correct_incorrect = tl_status THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) AS agreement_percentage
+                    FROM tbl_correct_incorrect_assign
+                    WHERE created_at >= ?
+                      AND created_at <= ?
+                      AND tl_status IS NOT NULL
+                      AND tl_status != ''";
+            $rows = $this->db->query($sql, [$from, $to])->result_array();
+            break;
+
+        case 'overall':
+            $filename = 'Overall_All_Data_' . date('Ymd_His') . '.csv';
+            $headers  = ['Comp Date', 'Created By Agent ID', 'Comp ID', 'Phone', 'TL Name', 'Audit By', 'Correct/Incorrect', 'Description Error', 'TL Status'];
+            $this->db->select("a.compdate, a.created_by_agent_id, a.compid, a.phone, a.tl_name, u.user_name AS audit_by,
+                                COALESCE(NULLIF(a.correct_incorrect, ''), 'Not Checked') AS correct_incorrect,
+                                a.description_error,
+                                a.tl_status", FALSE);
+            $this->db->from('tbl_correct_incorrect_assign a');
+            $this->db->join('master_users u', 'u.emp_id = a.assigned_to_emp_id', 'left');
+            $this->db->where('DATE(a.created_at) >=', $from_date);
+            $this->db->where('DATE(a.created_at) <=', $to_date);
+            $this->db->order_by('a.created_at', 'DESC');
+            $rows = $this->db->get()->result_array();
+            break;
+
+        default:
+            show_error('Invalid report type.', 400);
+            return;
+    }
+
+    // ---- CSV output (Excel me directly khulti hai) ----
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+
+    $output = fopen('php://output', 'w');
+    fputs($output, "\xEF\xBB\xBF");   // UTF-8 BOM, taaki Excel me special/hindi characters sahi dikhein
+    fputcsv($output, $headers);
+
+    foreach ($rows as $row) {
+        fputcsv($output, $row);
+    }
+
+    fclose($output);
+    exit; // zaroori — CI ka koi extra output CSV ko corrupt na kare
+}
+
 }

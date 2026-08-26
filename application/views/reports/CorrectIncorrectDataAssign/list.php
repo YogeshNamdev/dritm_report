@@ -205,30 +205,46 @@ function makeDataTable_Basic(tableID)
 
         <hr>
 
-        <div class="table-responsive">
-            <table id="assignSummaryTable" class="table table-bordered table-striped table-sm" style="width:100%">
-                <thead>
-    <tr>
-        <th>Date</th>
-        <th>Agent ID</th>
-        <th>Agent Name</th>
-        <th>Assigned to Agent (Count)</th>
-        <th>Day's Total Assigned</th>
-    </tr>
-</thead>
-                <tbody id="assignSummaryBody"></tbody>
-                <tfoot>
-                    <tr>
-                        <th colspan="3" class="text-right">Grand Total:</th>
-                        <th id="summaryGrandTotal">0</th>
-                        <th>—</th>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
+            <div class="table-responsive">
+                <table id="assignSummaryTable" class="table table-bordered table-striped table-sm" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Agent ID</th>
+                            <th>Agent Name</th>
+                            <th>Assigned to Agent (Count)</th>
+                            <th>Day's Total Assigned</th>
+                        </tr>
+                    </thead>
+                    <tbody id="assignSummaryBody"></tbody>
+                    <tfoot>
+                        <tr>
+                            <th colspan="3" class="text-right">Grand Total:</th>
+                            <th id="summaryGrandTotal">0</th>
+                            <th>—</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <button type="button" class="btn btn-outline-primary mr-2 mb-2" onclick="exportReport('breakdown', 'Correct_Incorrect_Breakdown.csv')">
+                        Correct/Incorrect Count + Description Error Breakdown
+                    </button>
+                    <button type="button" class="btn btn-outline-success mr-2 mb-2" onclick="exportReport('summary', 'Top_Level_Summary.csv')">
+                        Top-Level Summary
+                    </button>
+                    <button type="button" class="btn btn-outline-warning mr-2 mb-2" onclick="exportReport('match_percent', 'Match_Mismatch_Percent.csv')">
+                        Match/Mismatch %
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary mr-2 mb-2" onclick="exportReport('overall', 'Overall_All_Data.csv')">
+                        Overall All Data
+                    </button>
+                </div>
+            </div>
 
+        </div>
     </div>
-</div>
 
                 </div>
                 <!-- /.card-body -->
@@ -378,4 +394,40 @@ function renderAssignSummary(rows) {
 // Page load pe aaj tak ka summary auto-load kar do
 loadAssignSummary();
   
+
+function exportReport(type, filename) {
+
+    var from_date = $('#summary_from_date').val();
+    var to_date   = $('#summary_to_date').val();
+
+    if (!from_date || !to_date) {
+        alert('Please select From Date and To Date.');
+        return;
+    }
+
+    $.ajax({
+        type: "POST",
+        url: "<?php echo base_url(); ?>app/reports/export_report",
+        data: {
+            '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>',
+            type: type,
+            from_date: from_date,
+            to_date: to_date
+        },
+        xhrFields: { responseType: 'blob' },   // file ko binary blob ki tarah receive karega
+        success: function (blob) {
+            var url = window.URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        },
+        error: function () {
+            alert('Export failed. Please try again.');
+        }
+    });
+}
   </script>
