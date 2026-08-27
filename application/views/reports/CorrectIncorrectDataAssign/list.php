@@ -151,9 +151,10 @@ function makeDataTable_Basic(tableID)
                                 <div class="form-group">
                                     <label>&nbsp;</label>
                                     <button type="button"
-                                            class="btn btn-primary form-control" onclick="correct_incorrect_data_assign()">
-                                        Submit
-                                    </button>
+        id="btn_correct_incorrect_assign"
+        class="btn btn-primary form-control" onclick="correct_incorrect_data_assign()">
+    Submit
+</button>
                                 </div>
                             </div>
 
@@ -217,14 +218,14 @@ function makeDataTable_Basic(tableID)
                         </tr>
                     </thead>
                     <tbody id="assignSummaryBody"></tbody>
-                    <tfoot>
-                        <tr>
-                            <th colspan="3" class="text-right">Grand Total:</th>
-                            <th id="summaryGrandTotal">0</th>
-                            <th>—</th>
-                        </tr>
-                    </tfoot>
-                </table>
+                        <tfoot>
+                            <tr>
+                                <th colspan="3" class="text-right">Grand Total:</th>
+                                <th id="summaryGrandTotal">0</th>
+                                <th>—</th>
+                            </tr>
+                        </tfoot>
+                    </table>
             </div>
             <div class="row mt-3">
                 <div class="col-12">
@@ -243,8 +244,9 @@ function makeDataTable_Basic(tableID)
                 </div>
             </div>
 
-        </div>
+
     </div>
+</div>
 
                 </div>
                 <!-- /.card-body -->
@@ -264,7 +266,7 @@ function makeDataTable_Basic(tableID)
     function correct_incorrect_data_assign()
 {
     var number = $("#number").val();
-    var agent_ids = $("#agent_id").val();   // ye ab array return karega, jaise ["101","102","105"]
+    var agent_ids = $("#agent_id").val();
     var date = $("#date").val();
 
     if(number == "" || number <= 0)
@@ -278,6 +280,11 @@ function makeDataTable_Basic(tableID)
         return;
     }
 
+    // ---- Button disable + loading text ----
+    var $btn = $('#btn_correct_incorrect_assign');
+    var originalText = $btn.html();
+    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i>Assigning...');
+
     $.ajax({
         type: "POST",
         url: "<?php echo base_url(); ?>app/reports/correct_incorrect_data_assign",
@@ -285,20 +292,22 @@ function makeDataTable_Basic(tableID)
         data: {
             '<?php echo $this->security->get_csrf_token_name(); ?>':'<?php echo $this->security->get_csrf_hash(); ?>',
             number: number,
-            agent_id: agent_ids,   // array as it is jayega, CodeIgniter me $this->input->post('agent_id') array milega
+            agent_id: agent_ids,
             date: date
         },
         cache: false,
         success: function(data) {
             if(data.response) {
                 alert("Data assigned successfully.");
-                location.reload();
+                location.reload(); // page reload hone wali hai, isliye enable karne ki zarurat nahi
             } else {
                 alert("Error: " + data.message);
+                $btn.prop('disabled', false).html(originalText); // error case me wapas enable karo
             }
         },
         error: function() {
             alert("Server error. Please try again later.");
+            $btn.prop('disabled', false).html(originalText); // server error case me bhi enable karo
         }
     });
 }
@@ -393,9 +402,7 @@ function renderAssignSummary(rows) {
 
 // Page load pe aaj tak ka summary auto-load kar do
 loadAssignSummary();
-  
-
-function exportReport(type, filename) {
+  function exportReport(type, filename) {
 
     var from_date = $('#summary_from_date').val();
     var to_date   = $('#summary_to_date').val();
