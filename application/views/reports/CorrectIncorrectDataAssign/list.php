@@ -241,6 +241,9 @@ function makeDataTable_Basic(tableID)
                     <button type="button" class="btn btn-outline-secondary mr-2 mb-2" onclick="exportReport('overall', 'Overall_All_Data.csv')">
                         Overall All Data
                     </button>
+                    <button type="button" class="btn btn-outline-info mr-2 mb-2" onclick="exportReport('owa_agent_wise', 'OWA_Agent_Wise_Work.csv')">
+                        OWA Agent-wise Work Count
+                    </button>
                 </div>
             </div>
 

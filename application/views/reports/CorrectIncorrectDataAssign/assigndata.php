@@ -1,3 +1,16 @@
+<?php
+$this->config->load('config');
+$feedback_allowed_ids = $this->config->item('feedback_done_allowed_emp_ids') ?: array();
+$current_emp = (string) ($_SESSION['userdata']['emp_id'] ?? '');
+$is_admin = (($_SESSION['userdata']['role_id'] ?? null) == 1);
+
+$can_mark_feedback_done = in_array($current_emp, $feedback_allowed_ids);
+
+// PURANA: $show_feedback_column = $is_admin || $can_mark_feedback_done;
+// NAYA: admin ko kabhi nahi dikhega, sirf whitelist wale agent ko
+$show_feedback_column = (!$is_admin) && $can_mark_feedback_done;
+?>
+
 <link href="<?php echo base_url(); ?>includes/plugins/advance_datatable/jquery.dataTables.min.css" rel="stylesheet">
 <link href="<?php echo base_url(); ?>includes/plugins/advance_datatable/buttons.dataTables.min.css" rel="stylesheet">
 <link href="<?php echo base_url(); ?>includes/plugins/select2/css/select2.min.css" rel="stylesheet">
@@ -245,12 +258,16 @@ function makeDataTable_Basic(tableID, savedPageLength)
                                     <th>Correct / Incorrect</th>
                                     <th>Description Error</th>
                                     <th>Remark</th>
-                                    <?php if (($_SESSION['userdata']['role_id'] ?? null) == 1): ?>
+                                    <?php if ($is_admin): ?>
                                     <th>TL Feedback</th>
                                     <th class="no-export">TL Action</th>
                                     <?php else: ?>
                                     <th class="no-export">Action</th>
                                     <?php endif; ?>
+
+                                    <?php if ($show_feedback_column): ?>
+<th>Agent Feedback</th>
+<?php endif; ?>
                                 </tr>
                             </thead>
                             <tbody id="assignDataBody"></tbody>
@@ -325,12 +342,46 @@ function makeDataTable_Basic(tableID, savedPageLength)
     </div>
 </div>
 
+<div class="modal fade" id="feedbackDoneModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success">
+                <h5 class="modal-title text-white"><i class="fas fa-check-circle mr-2"></i>Mark Feedback Done</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>From Time</label>
+                    <input type="time" id="feedback_from_time" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>To Time</label>
+                    <input type="time" id="feedback_to_time" class="form-control">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="save_feedback_done_btn">
+                    <i class="fas fa-check mr-1"></i>Save
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 var CURRENT_ROLE_ID = <?= (int) ($_SESSION['userdata']['role_id'] ?? 0); ?>;
 var $activeRemarkBtn = null;
 var assignDataTable = null;
 var quillEditor = null;
 var remarksMap = {}; // rowId -> { html: '...', saved: '1' / '0' }
+
+var CAN_MARK_FEEDBACK_DONE = <?= $can_mark_feedback_done ? 'true' : 'false'; ?>;
+var SHOW_FEEDBACK_COLUMN = <?= $show_feedback_column ? 'true' : 'false'; ?>;
+
+
 
 var correctIncorrectOptions = ['Correct', 'Incorrect', 'Recheck'];
 
@@ -536,141 +587,16 @@ function buildUpdateButton(createdAt) {
     return '<button type="button" class="btn btn-sm btn-secondary" disabled title="Sirf assign wale din hi update ho sakti hai"><i class="fas fa-lock mr-1"></i>Locked</button>';
 }
 
-// function renderAssignTable(rows) {
-
-//     if (assignDataTable) {
-//         assignDataTable.destroy();
-//         assignDataTable = null;
-//     }
-
-//     var $tbody = $('#assignDataBody');
-//     $tbody.empty();
-
-//     if (!rows || rows.length === 0) {
-//         if (CURRENT_ROLE_ID == 1) {
-//             $tbody.html('<tr><td colspan="10" class="text-center">No records found</td></tr>');
-//         } else {
-//             $tbody.html('<tr><td colspan="9" class="text-center">No records found</td></tr>');
-//         }
-        
-//         return;
-//     }
-
-//     var isAdmin = (CURRENT_ROLE_ID == 1);
-
-//     $.each(rows, function (i, row) {
-
-//         var $tr = $('<tr>').attr('data-id', row.id);
-
-//         $tr.append('<td>' + escapeHtml(row.compdate) + '</td>');
-//         $tr.append('<td class="text-primary" style="cursor:pointer; text-decoration:underline; font-weight:600;" onclick="viewComplaintDetails(this)">' + escapeHtml(row.compid) + '</td>');
-//         $tr.append('<td>' + escapeHtml(row.created_by_agent_id) + '</td>');
-//         $tr.append('<td>' + escapeHtml(row.phone) + '</td>');
-//         $tr.append('<td>' + escapeHtml(row.tl_name) + '</td>');
-
-//         if (isAdmin) {
-//             // ---- ADMIN: agent ka data sirf READ-ONLY dikhega, edit nahi hoga ----
-//             $tr.append('<td>' + (escapeHtml(row.correct_incorrect) || '<span class="text-muted">—</span>') + '</td>');
-//             $tr.append('<td>' + (escapeHtml(row.description_error) || '<span class="text-muted">—</span>') + '</td>');
-//            // NAYA:
-// $tr.append('<td>' + buildAdminRemarkCell(row.id, row.remark) + '</td>');
-
-//             // ---- Naye TL Feedback columns ----
-//             $tr.append(buildTlFeedbackCells(row));
-
-//         } else {
-//             // ---- AGENT: purana editable behavior waisa hi ----
-//             var isTodayRow = (getDateOnly(row.created_at) === getTodayDate());
-
-//             $tr.append('<td>' + buildFieldCell(correctIncorrectOptions, row.correct_incorrect, 'correct_incorrect_select', isTodayRow) + '</td>');
-//             $tr.append('<td>' + buildFieldCell(descriptionErrorOptions, row.description_error, 'description_error_select', isTodayRow) + '</td>');
-//             $tr.append('<td>' + buildRemarkButton(row.id, row.remark, '1') + '</td>');
-//             $tr.append('<td class="no-export">' + buildUpdateButton(row.created_at) + '</td>');
-//         }
-
-//         $tbody.append($tr);
-//     });
-
-//     assignDataTable = makeDataTable_Basic('assignDataTable');
-// }
-
-// function renderAssignTable(rows) {
-
-//     // ---- Naya: destroy karne se pehle current page number yaad rakho ----
-//     var savedPageIndex = 0;
-//     if (assignDataTable) {
-//         try {
-//             savedPageIndex = assignDataTable.page.info().page; // 0-based page number
-//         } catch (e) {
-//             savedPageIndex = 0;
-//         }
-//         assignDataTable.destroy();
-//         assignDataTable = null;
-//     }
-
-//     var $tbody = $('#assignDataBody');
-//     $tbody.empty();
-
-//     if (!rows || rows.length === 0) {
-//         if (CURRENT_ROLE_ID == 1) {
-//             $tbody.html('<tr><td colspan="10" class="text-center">No records found</td></tr>');
-//         } else {
-//             $tbody.html('<tr><td colspan="9" class="text-center">No records found</td></tr>');
-//         }
-//         return;
-//     }
-
-//     var isAdmin = (CURRENT_ROLE_ID == 1);
-
-//     $.each(rows, function (i, row) {
-
-//         var $tr = $('<tr>').attr('data-id', row.id);
-
-//         $tr.append('<td>' + escapeHtml(row.compdate) + '</td>');
-//         $tr.append('<td class="text-primary" style="cursor:pointer; text-decoration:underline; font-weight:600;" onclick="viewComplaintDetails(this)">' + escapeHtml(row.compid) + '</td>');
-//         $tr.append('<td>' + escapeHtml(row.created_by_agent_id) + '</td>');
-//         $tr.append('<td>' + escapeHtml(row.phone) + '</td>');
-//         $tr.append('<td>' + escapeHtml(row.tl_name) + '</td>');
-
-//         if (isAdmin) {
-//             $tr.append('<td>' + (escapeHtml(row.correct_incorrect) || '<span class="text-muted">—</span>') + '</td>');
-//             $tr.append('<td>' + (escapeHtml(row.description_error) || '<span class="text-muted">—</span>') + '</td>');
-//             $tr.append('<td>' + buildAdminRemarkCell(row.id, row.remark) + '</td>');
-//             $tr.append(buildTlFeedbackCells(row));
-//         } else {
-//             var isTodayRow = (getDateOnly(row.created_at) === getTodayDate());
-
-//             $tr.append('<td>' + buildFieldCell(correctIncorrectOptions, row.correct_incorrect, 'correct_incorrect_select', isTodayRow) + '</td>');
-//             $tr.append('<td>' + buildFieldCell(descriptionErrorOptions, row.description_error, 'description_error_select', isTodayRow) + '</td>');
-//             $tr.append('<td>' + buildRemarkButton(row.id, row.remark, '1') + '</td>');
-//             $tr.append('<td class="no-export">' + buildUpdateButton(row.created_at) + '</td>');
-//         }
-
-//         $tbody.append($tr);
-//     });
-
-//     assignDataTable = makeDataTable_Basic('assignDataTable');
-
-//     // ---- Naya: table ban jaane ke baad, wahi purana page restore karo ----
-//     if (assignDataTable) {
-//         var totalPages = assignDataTable.page.info().pages;
-//         var targetPage = Math.min(savedPageIndex, Math.max(totalPages - 1, 0));
-
-//         // draw(false) -> paging reset nahi karega, sirf display refresh karega
-//         assignDataTable.page(targetPage).draw(false);
-//     }
-// }
 
 function renderAssignTable(rows) {
 
-    // ---- Naya: destroy karne se pehle current page number AUR page length yaad rakho ----
     var savedPageIndex = 0;
     var savedPageLength = 10;
 
     if (assignDataTable) {
         try {
-            savedPageIndex = assignDataTable.page.info().page; // 0-based page number
-            savedPageLength = assignDataTable.page.len(); // current page length (10/20/50/100/-1)
+            savedPageIndex = assignDataTable.page.info().page;
+            savedPageLength = assignDataTable.page.len();
         } catch (e) {
             savedPageIndex = 0;
             savedPageLength = 10;
@@ -683,11 +609,10 @@ function renderAssignTable(rows) {
     $tbody.empty();
 
     if (!rows || rows.length === 0) {
-        if (CURRENT_ROLE_ID == 1) {
-            $tbody.html('<tr><td colspan="10" class="text-center">No records found</td></tr>');
-        } else {
-            $tbody.html('<tr><td colspan="9" class="text-center">No records found</td></tr>');
-        }
+        var baseColspan = CURRENT_ROLE_ID == 1 ? 10 : 9;
+        if (SHOW_FEEDBACK_COLUMN) baseColspan += 1;
+
+        $tbody.html('<tr><td colspan="' + baseColspan + '" class="text-center">No records found</td></tr>');
         return;
     }
 
@@ -704,10 +629,18 @@ function renderAssignTable(rows) {
         $tr.append('<td>' + escapeHtml(row.tl_name) + '</td>');
 
         if (isAdmin) {
+            // ---- ADMIN: Agent Feedback column kabhi nahi dikhega ----
             $tr.append('<td>' + (escapeHtml(row.correct_incorrect) || '<span class="text-muted">—</span>') + '</td>');
             $tr.append('<td>' + (escapeHtml(row.description_error) || '<span class="text-muted">—</span>') + '</td>');
             $tr.append('<td>' + buildAdminRemarkCell(row.id, row.remark) + '</td>');
             $tr.append(buildTlFeedbackCells(row));
+
+            // Admin ke liye SHOW_FEEDBACK_COLUMN hamesha false rahega (PHP se hi tay ho chuka),
+            // isliye yeh block admin ke liye kabhi nahi chalega — lekin defensive check rakha hai
+            if (SHOW_FEEDBACK_COLUMN) {
+                $tr.append('<td>' + buildFeedbackDoneCell(row) + '</td>');
+            }
+
         } else {
             var isTodayRow = (getDateOnly(row.created_at) === getTodayDate());
 
@@ -715,21 +648,40 @@ function renderAssignTable(rows) {
             $tr.append('<td>' + buildFieldCell(descriptionErrorOptions, row.description_error, 'description_error_select', isTodayRow) + '</td>');
             $tr.append('<td>' + buildRemarkButton(row.id, row.remark, '1') + '</td>');
             $tr.append('<td class="no-export">' + buildUpdateButton(row.created_at) + '</td>');
+
+            // Agent ke liye sirf whitelist wale ko yeh column dikhega
+            if (SHOW_FEEDBACK_COLUMN) {
+                $tr.append('<td>' + buildFeedbackDoneCell(row) + '</td>');
+            }
         }
 
         $tbody.append($tr);
     });
 
-    // ---- Naya: saved page length pass karo table banate waqt ----
     assignDataTable = makeDataTable_Basic('assignDataTable', savedPageLength);
 
-    // ---- Purana page number restore karo ----
     if (assignDataTable) {
         var totalPages = assignDataTable.page.info().pages;
         var targetPage = Math.min(savedPageIndex, Math.max(totalPages - 1, 0));
 
         assignDataTable.page(targetPage).draw(false);
     }
+}
+
+function buildFeedbackDoneCell(row) {
+    var isDone = (row.feedback_done === 'Yes');
+
+    if (isDone) {
+        return '<span class="badge badge-success"><i class="fas fa-check mr-1"></i>Done</span>'
+             + '<div class="small text-muted mt-1">' + escapeHtml(row.feedback_time_duration || '') + '</div>';
+    }
+
+    if (!CAN_MARK_FEEDBACK_DONE) {
+        return '<span class="text-muted">—</span>'; // admin/non-eligible agent ko button nahi, khali dash
+    }
+
+    return '<button type="button" class="btn btn-sm btn-outline-success btn-feedback-done" data-row-id="' + row.id + '">'
+         + '<i class="fas fa-check mr-1"></i>Feedback Done</button>';
 }
 
 function buildTlFeedbackCells(row) {
@@ -1094,5 +1046,53 @@ if (CURRENT_ROLE_ID == 1) {
     loadTlList();
 }
 today_assign_data();
+
+var $activeFeedbackBtn = null;
+
+$(document).on('click', '.btn-feedback-done', function () {
+    $activeFeedbackBtn = $(this);
+    $('#feedback_from_time').val('');
+    $('#feedback_to_time').val('');
+    $('#feedbackDoneModal').modal('show');
+});
+
+$('#save_feedback_done_btn').on('click', function () {
+    if (!$activeFeedbackBtn) return;
+
+    var rowId = $activeFeedbackBtn.data('row-id');
+    var fromTime = $('#feedback_from_time').val();
+    var toTime = $('#feedback_to_time').val();
+
+    if (!fromTime || !toTime) {
+        alert('From aur To dono time select karein');
+        return;
+    }
+
+    var $btn = $(this);
+    $btn.prop('disabled', true).text('Saving...');
+
+    $.ajax({
+        url: "<?= base_url(); ?>app/reports/update_feedback_done",
+        type: "POST",
+        data: { id: rowId, from_time: fromTime, to_time: toTime },
+        dataType: "json",
+        success: function (res) {
+            $btn.prop('disabled', false).html('<i class="fas fa-check mr-1"></i>Save');
+
+            if (res.status === 'success') {
+                $('#feedbackDoneModal').modal('hide');
+                today_assign_data();
+            } else {
+                alert(res.message);
+            }
+        },
+        error: function () {
+            $btn.prop('disabled', false).html('<i class="fas fa-check mr-1"></i>Save');
+            alert('Server error, dobara try karein');
+        }
+    });
+
+    $activeFeedbackBtn = null;
+});
 
 </script>

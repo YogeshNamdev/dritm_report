@@ -2652,6 +2652,31 @@ public function export_report()
             $this->db->order_by('a.created_at', 'DESC');
             $rows = $this->db->get()->result_array();
             break;
+        case 'owa_agent_wise':
+    $filename = 'OWA_Agent_Wise_Work_' . date('Ymd_His') . '.csv';
+    $headers  = ['Date', 'Agent ID', 'Agent Name', 'MSD ID', 'Total Work Count'];
+
+    $sql = "SELECT
+                combined.work_date      AS work_date,
+                u.emp_id                AS agent_id,
+                u.user_name             AS agent_name,
+                u.msd_id                AS msd_id,
+                COUNT(combined.id)      AS total_count
+            FROM (
+                SELECT id, added_by, DATE(added_at) AS work_date FROM owa_report
+                WHERE DATE(added_at) >= ? AND DATE(added_at) <= ?
+
+                UNION ALL
+
+                SELECT id, added_by, DATE(added_at) AS work_date FROM `owa_report_22-08-2026`
+                WHERE DATE(added_at) >= ? AND DATE(added_at) <= ?
+            ) AS combined
+            LEFT JOIN master_users u ON u.emp_id = combined.added_by
+            GROUP BY combined.work_date, combined.added_by
+            ORDER BY combined.work_date ASC, total_count DESC";
+
+    $rows = $this->db->query($sql, [$from_date, $to_date, $from_date, $to_date])->result_array();
+    break;
 
         default:
             show_error('Invalid report type.', 400);
@@ -2675,5 +2700,37 @@ public function export_report()
     fclose($output);
     exit; // zaroori — CI ka koi extra output CSV ko corrupt na kare
 }
+
+public function update_feedback_done()
+{
+    $this->config->load('config');
+    $allowed_ids = $this->config->item('feedback_done_allowed_emp_ids') ?: array();
+
+    $current_emp_id = (string) $this->current_emp_id();
+
+    if (!in_array($current_emp_id, $allowed_ids)) {
+        echo json_encode(['status' => 'error', 'message' => 'Aapko yeh action karne ki permission nahi hai']);
+        return;
+    }
+
+    $id        = $this->input->post('id');
+    $from_time = $this->input->post('from_time');
+    $to_time   = $this->input->post('to_time');
+
+    if (empty($id) || empty($from_time) || empty($to_time)) {
+        echo json_encode(['status' => 'error', 'message' => 'From aur To time dono zaroori hain']);
+        return;
+    }
+
+    $time_duration = $from_time . ' - ' . $to_time;
+
+    $updated = $this->Report_m->update_feedback_done($id, $time_duration);
+
+    echo json_encode([
+        'status'  => $updated ? 'success' : 'error',
+        'message' => $updated ? 'Feedback Done mark ho gaya' : 'Update fail ho gaya, dobara try karein'
+    ]);
+}
+
 
 }

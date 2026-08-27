@@ -2330,4 +2330,15 @@ public function get_assign_summary($from_date = null, $to_date = null)
     return $this->db->get()->result();
 }
 
+public function update_feedback_done($id, $time_duration)
+{
+    $data = array(
+        'feedback_done'          => 'Yes',
+        'feedback_time_duration' => $time_duration
+    );
+
+    $this->db->where('id', $id);
+    return $this->db->update('tbl_correct_incorrect_assign', $data);
+}
+
 }

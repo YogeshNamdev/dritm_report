@@ -528,4 +528,5 @@ $config['proxy_ips'] = '';
 
 $config['site_key'] = '6Lfa9IwdAAAAADn8uWabgXsjG9NfWsmjHemWo-zA';
 $config['secret_key'] = '6Lfa9IwdAAAAAH5Ulcit1RKGd1-KGuhhTW18j4Dy';
+$config['feedback_done_allowed_emp_ids'] = array('27128', '27182'); // apne actual emp_ids se replace karo
 
