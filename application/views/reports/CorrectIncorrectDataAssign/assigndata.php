@@ -70,6 +70,15 @@ function makeDataTable_Basic(tableID, savedPageLength)
 @media (max-width: 767px) {
     .cd-info-grid { grid-template-columns: 1fr; }
 }
+
+.tl-sub-status-wrap {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed #dee2e6;
+}
+#assignDataTable td { vertical-align: top; }
+
+
 .cd-info-item { border-bottom: 1px dashed #e0e0e0; padding-bottom: 6px; }
 .cd-info-label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: .3px; }
 .cd-info-value { font-size: 14px; font-weight: 500; word-break: break-word; }
@@ -150,6 +159,28 @@ function makeDataTable_Basic(tableID, savedPageLength)
 /* ---- Table row polish ---- */
 #assignDataTable thead th { background: #343a40; color: #fff; font-size: 13px; vertical-align: middle; }
 #assignDataTable tbody td { font-size: 13.5px; vertical-align: middle; }
+
+
+.tl_status_select,
+.tl_sub_status_select {
+    width: 100%;
+    height: 32px;
+    font-size: 12.5px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #ced4da;
+}
+
+.tl-sub-status-wrap {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px dashed #dee2e6;
+}
+
+.tl-sub-status-wrap select {
+    width: 100%;
+}
+
     </style>
   <!-- Bootstrap Switch -->
 
@@ -225,6 +256,16 @@ function makeDataTable_Basic(tableID, savedPageLength)
                     <option value="">-- Select TL --</option>
                     <option value="Sanjesh">Sanjesh</option>
                     <option value="Naina">Naina</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="form-group mb-0">
+                <label for="tl_select">Select Status</label>
+                <select id="correct_incorrect" name="correct_incorrect" class="form-control">
+                    <option value="">-- Select Status --</option>
+                    <option value="Correct">Correct</option>
+                    <option value="Incorrect">Incorrect</option>
                 </select>
             </div>
         </div>
@@ -471,7 +512,7 @@ function initRemarkEditor() {
 
 function today_assign_data() {
     var filter_date = $('#filter_date').val();
-
+    var correct_incorrect = $('#correct_incorrect').val();                                   
     $('#assignDataBody').html('<tr><td colspan="9" class="text-center p-3"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>');
 
     if (CURRENT_ROLE_ID == 1) {
@@ -480,7 +521,7 @@ function today_assign_data() {
         $.ajax({
             url: "<?= base_url(); ?>app/reports/admin_assign_data",
             type: "POST",
-            data: { filter_date: filter_date, tl_name: tl_name },
+            data: { filter_date: filter_date, tl_name: tl_name, correct_incorrect: correct_incorrect },
             dataType: "json",
             success: function (response) { renderAssignTable(response); },
             error: function () {
@@ -529,6 +570,11 @@ $(document).on('change', '#filter_date', function () {
 $(document).on('change', '#tl_select', function () {
     today_assign_data();
 });
+
+$(document).on('change', '#correct_incorrect', function () {
+    today_assign_data();
+});
+
 
 // value already set hai -> text + edit icon dikhao (dropdown hidden rahega peeche)
 // value empty hai -> seedha dropdown dikhao
@@ -684,14 +730,47 @@ function buildFeedbackDoneCell(row) {
          + '<i class="fas fa-check mr-1"></i>Feedback Done</button>';
 }
 
+// function buildTlFeedbackCells(row) {
+//     var hasTlStatus = row.tl_status && row.tl_status.trim() !== '';
+
+//     if (hasTlStatus) {
+//         var badgeClass = (row.tl_status === 'Correct') ? 'badge-success' : 'badge-danger';
+
+//         var statusHtml = '<span class="badge ' + badgeClass + '">' + escapeHtml(row.tl_status) + '</span>'
+//             + '<div class="small text-muted mt-1">'
+//             + 'by ' + escapeHtml(row.given_tl_status || '') + '<br>'
+//             + escapeHtml(row.tl_update_at || '')
+//             + '</div>';
+
+//         return '<td>' + statusHtml + '</td><td class="no-export text-center">—</td>';
+//     }
+
+//     var selectHtml = '<select class="form-control form-control-sm tl_status_select">'
+//         + '<option value="">-- Select --</option>'
+//         + '<option value="Correct">Correct</option>'
+//         + '<option value="Incorrect">Incorrect</option>'
+//         + '</select>';
+
+//     var btnHtml = '<button type="button" class="btn btn-sm btn-primary btn-update-tl-status">'
+//         + '<i class="fas fa-check mr-1"></i>Update</button>';
+
+//     return '<td>' + selectHtml + '</td><td class="no-export">' + btnHtml + '</td>';
+// }
+
 function buildTlFeedbackCells(row) {
     var hasTlStatus = row.tl_status && row.tl_status.trim() !== '';
 
     if (hasTlStatus) {
         var badgeClass = (row.tl_status === 'Correct') ? 'badge-success' : 'badge-danger';
 
-        var statusHtml = '<span class="badge ' + badgeClass + '">' + escapeHtml(row.tl_status) + '</span>'
-            + '<div class="small text-muted mt-1">'
+        var statusHtml = '<span class="badge ' + badgeClass + '">' + escapeHtml(row.tl_status) + '</span>';
+
+        // Agar Incorrect ke sath sub-status bhi diya gaya tha, to wo bhi dikhao
+        if (row.tl_status === 'Incorrect' && row.tl_sub_status && row.tl_sub_status.trim() !== '') {
+            statusHtml += '<div class="mt-1"><span class="badge badge-secondary">' + escapeHtml(row.tl_sub_status) + '</span></div>';
+        }
+
+        statusHtml += '<div class="small text-muted mt-1">'
             + 'by ' + escapeHtml(row.given_tl_status || '') + '<br>'
             + escapeHtml(row.tl_update_at || '')
             + '</div>';
@@ -699,16 +778,27 @@ function buildTlFeedbackCells(row) {
         return '<td>' + statusHtml + '</td><td class="no-export text-center">—</td>';
     }
 
+    // ---- Editable state: dropdown + conditional sub-dropdown ----
     var selectHtml = '<select class="form-control form-control-sm tl_status_select">'
         + '<option value="">-- Select --</option>'
         + '<option value="Correct">Correct</option>'
         + '<option value="Incorrect">Incorrect</option>'
         + '</select>';
 
+    // Naya: sub-status dropdown, default hidden
+    var subSelectHtml = '<div class="tl-sub-status-wrap" style="display:none;">'
+    + '<select class="form-control form-control-sm tl_sub_status_select">'
+    + '<option value="">-- Select --</option>'
+    + '<option value="Feedback Shared">Feedback Shared</option>'
+    + '<option value="Pending">Pending</option>'
+    + '<option value="Week Off">Week Off</option>'
+    + '</select>'
+    + '</div>';
+
     var btnHtml = '<button type="button" class="btn btn-sm btn-primary btn-update-tl-status">'
         + '<i class="fas fa-check mr-1"></i>Update</button>';
 
-    return '<td>' + selectHtml + '</td><td class="no-export">' + btnHtml + '</td>';
+    return '<td>' + selectHtml + subSelectHtml + '</td><td class="no-export">' + btnHtml + '</td>';
 }
 
 // ==========================================================
@@ -953,6 +1043,42 @@ function buildAdminRemarkCell(rowId, remarkHtml) {
     return '<span class="text-muted"><i class="fas fa-ban mr-1"></i>No Remark</span>';
 }
 
+// $(document).on('click', '.btn-update-tl-status', function () {
+
+//     var $btn = $(this);
+//     var $tr = $btn.closest('tr');
+//     var id = $tr.data('id');
+
+//     var tl_status = $tr.find('.tl_status_select').val();
+//     var selected_tl = $('#tl_select').val(); // upar wale dropdown se currently selected TL
+
+//     if (!tl_status) {
+//         alert('Pehle Correct / Incorrect select karein');
+//         return;
+//     }
+
+//     $btn.prop('disabled', true).text('Saving...');
+
+//     $.ajax({
+//         url: "<?= base_url(); ?>app/reports/update_tl_status",
+//         type: "POST",
+//         data: { id: id, tl_status: tl_status, given_tl_name: selected_tl },
+//         dataType: "json",
+//         success: function (res) {
+//             if (res.status === 'success') {
+//                 today_assign_data();
+//             } else {
+//                 $btn.prop('disabled', false).text('Update');
+//                 alert(res.message);
+//             }
+//         },
+//         error: function () {
+//             $btn.prop('disabled', false).text('Update');
+//             alert('Server error, dobara try karein');
+//         }
+//     });
+// });
+
 $(document).on('click', '.btn-update-tl-status', function () {
 
     var $btn = $(this);
@@ -960,7 +1086,8 @@ $(document).on('click', '.btn-update-tl-status', function () {
     var id = $tr.data('id');
 
     var tl_status = $tr.find('.tl_status_select').val();
-    var selected_tl = $('#tl_select').val(); // upar wale dropdown se currently selected TL
+    var tl_sub_status = $tr.find('.tl_sub_status_select').val(); // naya — optional, khali bhi ho sakta hai
+    var selected_tl = $('#tl_select').val();
 
     if (!tl_status) {
         alert('Pehle Correct / Incorrect select karein');
@@ -972,7 +1099,12 @@ $(document).on('click', '.btn-update-tl-status', function () {
     $.ajax({
         url: "<?= base_url(); ?>app/reports/update_tl_status",
         type: "POST",
-        data: { id: id, tl_status: tl_status, given_tl_name: selected_tl },
+        data: {
+            id: id,
+            tl_status: tl_status,
+            tl_sub_status: tl_sub_status, // naya
+            given_tl_name: selected_tl
+        },
         dataType: "json",
         success: function (res) {
             if (res.status === 'success') {
@@ -1095,4 +1227,16 @@ $('#save_feedback_done_btn').on('click', function () {
     $activeFeedbackBtn = null;
 });
 
+
+$(document).on('change', '.tl_status_select', function () {
+    var $tr = $(this).closest('tr');
+    var $subWrap = $tr.find('.tl-sub-status-wrap');
+
+    if ($(this).val() === 'Incorrect') {
+        $subWrap.show();
+    } else {
+        $subWrap.hide();
+        $subWrap.find('.tl_sub_status_select').val(''); // hide hote hi reset bhi kar do
+    }
+});
 </script>

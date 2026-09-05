@@ -2269,7 +2269,7 @@ public function get_active_tl_list($filter_date = null)
 }
 
 // Admin view — koi emp_id restriction nahi, sirf date + TL filter
-public function admin_assign_data($filter_date, $tl_name)
+public function admin_assign_data($filter_date, $tl_name, $correct_incorrect)
 {
     if (!empty($filter_date)) {
         $this->db->where('created_at >=', $filter_date . ' 00:00:00');
@@ -2279,6 +2279,10 @@ public function admin_assign_data($filter_date, $tl_name)
     if (!empty($tl_name)) {
         $this->db->where('tl_name', $tl_name);
     }
+
+	if(!empty($correct_incorrect)) {
+		$this->db->where('correct_incorrect', $correct_incorrect);
+	}
 
     $this->db->order_by('compid', 'desc');
     return $this->db->get('tbl_correct_incorrect_assign')->result();

@@ -2475,8 +2475,9 @@ public function admin_assign_data()
 
     $filter_date = $this->input->post('filter_date');
     $tl_name     = $this->input->post('tl_name');
+    $correct_incorrect = $this->input->post('correct_incorrect');
 
-    $rows = $this->Report_m->admin_assign_data($filter_date, $tl_name);
+    $rows = $this->Report_m->admin_assign_data($filter_date, $tl_name, $correct_incorrect);
     echo json_encode($rows);
 }
 
@@ -2512,6 +2513,42 @@ public function admin_assign_data()
 //     ]);
 // }
 
+// public function update_tl_status()
+// {
+//     if (($_SESSION['userdata']['role_id'] ?? null) != 1) {
+//         echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+//         return;
+//     }
+
+//     $id            = $this->input->post('id');
+//     $tl_status     = $this->input->post('tl_status');
+//     $given_tl_name = $this->input->post('given_tl_name'); // upar dropdown se selected TL
+
+//     if (empty($id) || empty($tl_status)) {
+//         echo json_encode(['status' => 'error', 'message' => 'Invalid data']);
+//         return;
+//     }
+
+//     // Agar TL dropdown se koi naam selected hai to wahi save hoga.
+//     // Agar kuch bhi selected nahi hai, to current logged-in admin ka apna naam fallback ban jaega.
+//     $admin_name = !empty($given_tl_name)
+//         ? $given_tl_name
+//         : ($_SESSION['userdata']['user_name'] ?? 'Admin');
+
+//     $data = [
+//         'tl_status'       => $tl_status,
+//         'given_tl_status' => $admin_name,
+//         'tl_update_at'    => date('Y-m-d H:i:s')
+//     ];
+
+//     $updated = $this->Report_m->update_tl_status($id, $data);
+
+//     echo json_encode([
+//         'status'  => $updated ? 'success' : 'error',
+//         'message' => $updated ? 'TL status update ho gaya' : 'Update fail ho gaya, dobara try karein'
+//     ]);
+// }
+
 public function update_tl_status()
 {
     if (($_SESSION['userdata']['role_id'] ?? null) != 1) {
@@ -2521,21 +2558,22 @@ public function update_tl_status()
 
     $id            = $this->input->post('id');
     $tl_status     = $this->input->post('tl_status');
-    $given_tl_name = $this->input->post('given_tl_name'); // upar dropdown se selected TL
+    $tl_sub_status = $this->input->post('tl_sub_status'); // naya, optional
+    $given_tl_name = $this->input->post('given_tl_name');
 
     if (empty($id) || empty($tl_status)) {
         echo json_encode(['status' => 'error', 'message' => 'Invalid data']);
         return;
     }
 
-    // Agar TL dropdown se koi naam selected hai to wahi save hoga.
-    // Agar kuch bhi selected nahi hai, to current logged-in admin ka apna naam fallback ban jaega.
     $admin_name = !empty($given_tl_name)
         ? $given_tl_name
-        : ($_SESSION['userdata']['user_name'] ?? 'Admin');
+        : ($_SESSION['userdata']['name'] ?? 'Admin');
 
     $data = [
         'tl_status'       => $tl_status,
+        // Sirf "Incorrect" ke sath hi meaningful hai, warna NULL save karo
+        'tl_sub_status'   => ($tl_status === 'Incorrect' && !empty($tl_sub_status)) ? $tl_sub_status : null,
         'given_tl_status' => $admin_name,
         'tl_update_at'    => date('Y-m-d H:i:s')
     ];
@@ -2547,8 +2585,6 @@ public function update_tl_status()
         'message' => $updated ? 'TL status update ho gaya' : 'Update fail ho gaya, dobara try karein'
     ]);
 }
-
-
 public function assign_summary()
 {
     $from_date = $this->input->post('from_date');
