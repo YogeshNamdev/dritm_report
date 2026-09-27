@@ -65,6 +65,70 @@
                         <p>Users</p>
                     </a>
                 </li>
+                
+                <li class="nav-item">
+                    <a href="<?php echo base_url(); ?>app/Attendance" class="nav-link sb-link">
+                        <span class="sb-link-icon"><i class="fas fa-users"></i></span>
+                        <p>Attendance Dashboard</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="<?php echo base_url(); ?>app/Attendance/roster_builder" class="nav-link sb-link">
+                        <span class="sb-link-icon"><i class="fas fa-users"></i></span>
+                        <p>Roster Builder</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="<?php echo base_url(); ?>app/Attendance/Cl_tracker" class="nav-link sb-link">
+                        <span class="sb-link-icon"><i class="fas fa-users"></i></span>
+                        <p>CL Tracker</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="<?php echo base_url(); ?>app/Attendance/roster_compliance" class="nav-link sb-link">
+                        <span class="sb-link-icon"><i class="fas fa-users"></i></span>
+                        <p>Roster Compliance</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="<?php echo base_url(); ?>app/Attendance/employees" class="nav-link sb-link">
+                        <span class="sb-link-icon"><i class="fas fa-users"></i></span>
+                        <p>Employees</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="<?php echo base_url(); ?>app/Attendance/exceptions" class="nav-link sb-link">
+                        <span class="sb-link-icon"><i class="fas fa-users"></i></span>
+                        <p>Exceptions</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="<?php echo base_url(); ?>app/Attendance/matrix" class="nav-link sb-link">
+                        <span class="sb-link-icon"><i class="fas fa-users"></i></span>
+                        <p>Matrix</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="<?php echo base_url(); ?>app/Attendance/tl_wise" class="nav-link sb-link">
+                        <span class="sb-link-icon"><i class="fas fa-users"></i></span>
+                        <p>TL Wise</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="<?php echo base_url(); ?>app/Attendance/upload_center" class="nav-link sb-link">
+                        <span class="sb-link-icon"><i class="fas fa-users"></i></span>
+                        <p>Upload Attendance</p>
+                    </a>
+                </li>
+
 
                 <?php endif; ?>
 
@@ -248,17 +312,17 @@
                 </li>
                  <?php endif; ?>
                  <?php if($_SESSION["userdata"]["role_id"] == 3 || $_SESSION["userdata"]["role_id"] == 1): ?>
-                <li class="nav-item">
-                    <a href="<?php echo base_url(); ?>app/Reports/today_assign_incorrect_data" class="nav-link sb-link">
-                        <span class="sb-link-icon">
-                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <rect x="2" y="7" width="20" height="14" rx="2"/>
-                                <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/>
-                            </svg>
-                        </span>
-                        <p>Today's Assign Data</p>
-                    </a>
-                </li>
+                    <li class="nav-item">
+                        <a href="<?php echo base_url(); ?>app/Reports/today_assign_incorrect_data" class="nav-link sb-link">
+                            <span class="sb-link-icon">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <rect x="2" y="7" width="20" height="14" rx="2"/>
+                                    <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/>
+                                </svg>
+                            </span>
+                            <p>Today's Assign Data</p>
+                        </a>
+                    </li>
                 <?php endif; ?>
             </ul>
         </nav>

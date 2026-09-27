@@ -76,9 +76,15 @@ $route['index/(:any)'] = 'index/$1';
 $route['student-login'] = 'studentauth/login';
 $route['student-login-check'] = 'studentauth/login_check';
 $route['student-dashboard'] = 'student/student_dashboard';
-
-
-
+$route['app/attendance']                          = 'app/attendance/index';
+$route['app/attendance/upload_center']             = 'app/attendance/upload_center';
+$route['app/attendance/matrix']                    = 'app/attendance/matrix';
+$route['app/attendance/tl_wise']                   = 'app/attendance/tl_wise';
+$route['app/attendance/exceptions']                = 'app/attendance/exceptions';
+$route['app/attendance/roster_builder'] = 'app/attendance/roster_builder';
+$route['app/attendance/employees'] = 'app/attendance/employees';
+$route['app/attendance/cl_tracker'] = 'app/attendance/cl_tracker';
+$route['app/attendance/roster_compliance'] = 'app/attendance/roster_compliance';
 $route['(:any)/(:any)'] = 'index/index/$1/$2';
 $route['(:any)'] = 'index/index/$1';
 
