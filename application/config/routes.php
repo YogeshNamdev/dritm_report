@@ -85,6 +85,9 @@ $route['app/attendance/roster_builder'] = 'app/attendance/roster_builder';
 $route['app/attendance/employees'] = 'app/attendance/employees';
 $route['app/attendance/cl_tracker'] = 'app/attendance/cl_tracker';
 $route['app/attendance/roster_compliance'] = 'app/attendance/roster_compliance';
+$route['app/attendance/my_roster'] = 'app/attendance/my_roster';
+$route['app/attendance/request_roster_change'] = 'app/attendance/request_roster_change';
+$route['app/attendance/roster_requests'] = 'app/attendance/roster_requests';
 $route['(:any)/(:any)'] = 'index/index/$1/$2';
 $route['(:any)'] = 'index/index/$1';
 

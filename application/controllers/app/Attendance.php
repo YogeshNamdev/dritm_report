@@ -223,6 +223,53 @@ class Attendance extends CI_Controller {
         $this->load->view('app/templates/footer', $data);
     }
 
+    public function my_roster($page = "my_roster")
+    {
+        $data = array();
+        if(!file_exists(APPPATH.'views/attendance/'.$page.'.php'))
+        {
+            show_404();
+        }
+        $data["title"] = "My Roster";
+        $this->load->view('app/templates/header', $data);
+        $this->load->view('app/templates/side_panel', $data);
+        $this->load->view('attendance/'.$page, $data);
+        $this->load->view('app/templates/footer', $data);
+    }
+
+    public function request_roster_change($page = "request_roster_change")
+    {
+        $data = array();
+        if(!file_exists(APPPATH.'views/attendance/'.$page.'.php'))
+        {
+            show_404();
+        }
+        $data["shift_presets"] = $this->Attendance_model->get_shift_presets();
+        $data["title"] = "Roster Change Request";
+        $this->load->view('app/templates/header', $data);
+        $this->load->view('app/templates/side_panel', $data);
+        $this->load->view('attendance/'.$page, $data);
+        $this->load->view('app/templates/footer', $data);
+    }
+
+    public function roster_requests($page = "roster_requests")
+    {
+        if(!$this->is_admin())
+        {
+            show_error('You are not authorized to access this page.', 403);
+        }
+        $data = array();
+        if(!file_exists(APPPATH.'views/attendance/'.$page.'.php'))
+        {
+            show_404();
+        }
+        $data["title"] = "Roster Change Requests";
+        $this->load->view('app/templates/header', $data);
+        $this->load->view('app/templates/side_panel', $data);
+        $this->load->view('attendance/'.$page, $data);
+        $this->load->view('app/templates/footer', $data);
+    }
+
     // ------------------------------------------------------------------
     // AJAX: FILE UPLOAD (RAW REPORT / ROSTER)
     // ------------------------------------------------------------------
@@ -860,6 +907,141 @@ class Attendance extends CI_Controller {
         }
         $report = $this->Attendance_model->check_roster_compliance($date);
         echo json_encode(array("response" => TRUE, "report" => $report));
+    }
+
+    // ------------------------------------------------------------------
+    // AJAX: MY ROSTER (agent apna roster dekhta hai — read only)
+    // ------------------------------------------------------------------
+
+    public function get_my_roster()
+    {
+        $month = $this->input->post('month');
+        if(empty($month))
+        {
+            echo json_encode(array("response" => FALSE, "message" => "Month required."));
+            return;
+        }
+
+        $rows = $this->Attendance_model->get_employee_roster_month($this->current_emp_id(), $month);
+        echo json_encode(array("response" => TRUE, "total_record" => count($rows), "all_record" => $rows));
+    }
+
+    // ------------------------------------------------------------------
+    // AJAX: ROSTER CHANGE REQUEST — AGENT SIDE
+    // ------------------------------------------------------------------
+
+    public function submit_roster_change_request()
+    {
+        $date = $this->input->post('request_date');
+        $code = $this->input->post('code');
+        $remark = trim($this->input->post('remark'));
+
+        if(empty($date))
+        {
+            echo json_encode(array("response" => FALSE, "message" => "Date select karo."));
+            return;
+        }
+        if(empty($code))
+        {
+            echo json_encode(array("response" => FALSE, "message" => "Kya chahiye wo select karo."));
+            return;
+        }
+        if($remark == '')
+        {
+            echo json_encode(array("response" => FALSE, "message" => "Reason likho ki roster change kyu chahiye."));
+            return;
+        }
+
+        // agent hamesha apna hi emp_id use karega, kisi aur ka POST se emp_id accept nahi karte
+        $id = $this->Attendance_model->create_roster_change_request($this->current_emp_id(), $date, $code, $remark);
+
+        echo json_encode(array("response" => TRUE, "message" => "Request bhej di gayi, admin approval ka wait karo.", "id" => $id));
+    }
+
+    public function get_my_roster_requests()
+    {
+        $rows = $this->Attendance_model->get_my_roster_requests($this->current_emp_id());
+        echo json_encode(array("response" => TRUE, "total_record" => count($rows), "all_record" => $rows));
+    }
+
+    // ------------------------------------------------------------------
+    // AJAX: ROSTER CHANGE REQUEST — ADMIN SIDE
+    // ------------------------------------------------------------------
+
+    public function get_all_roster_requests()
+    {
+        if(!$this->is_admin())
+        {
+            return $this->deny_json();
+        }
+        $status = $this->input->post('status'); // '' = sab, ya 'Pending'/'Approved'/'Rejected'
+        $rows = $this->Attendance_model->get_all_roster_requests($status ?: null);
+        echo json_encode(array("response" => TRUE, "total_record" => count($rows), "all_record" => $rows));
+    }
+
+    public function check_request_capacity()
+    {
+        if(!$this->is_admin())
+        {
+            return $this->deny_json();
+        }
+        $emp_id = (int)$this->input->post('emp_id');
+        $date = $this->input->post('request_date');
+        $code = $this->input->post('code');
+
+        $result = $this->Attendance_model->check_capacity_for_leave_change($emp_id, $date, $code);
+        echo json_encode(array("response" => TRUE, "capacity_ok" => $result['ok'], "message" => $result['message']));
+    }
+
+    public function approve_roster_request()
+    {
+        if(!$this->is_admin())
+        {
+            return $this->deny_json();
+        }
+
+        $request_id = (int)$this->input->post('request_id');
+        $admin_remark = trim($this->input->post('admin_remark'));
+        $force = (int)$this->input->post('force') === 1;
+
+        if($request_id <= 0)
+        {
+            echo json_encode(array("response" => FALSE, "message" => "Invalid request."));
+            return;
+        }
+        if($admin_remark == '')
+        {
+            echo json_encode(array("response" => FALSE, "message" => "Approval ka reason/remark likho."));
+            return;
+        }
+
+        $result = $this->Attendance_model->approve_roster_request($request_id, $this->current_emp_id(), $admin_remark, $force);
+        echo json_encode(array("response" => $result['ok'], "message" => $result['message']));
+    }
+
+    public function reject_roster_request()
+    {
+        if(!$this->is_admin())
+        {
+            return $this->deny_json();
+        }
+
+        $request_id = (int)$this->input->post('request_id');
+        $admin_remark = trim($this->input->post('admin_remark'));
+
+        if($request_id <= 0)
+        {
+            echo json_encode(array("response" => FALSE, "message" => "Invalid request."));
+            return;
+        }
+        if($admin_remark == '')
+        {
+            echo json_encode(array("response" => FALSE, "message" => "Reject karne ka reason likhna zaroori hai."));
+            return;
+        }
+
+        $result = $this->Attendance_model->reject_roster_request($request_id, $this->current_emp_id(), $admin_remark);
+        echo json_encode(array("response" => $result['ok'], "message" => $result['message']));
     }
 
 }

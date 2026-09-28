@@ -75,7 +75,7 @@ class Attendance_model extends CI_Model {
         return $this->db->get()->row();
     }
 
-    public function get_distinct_lob()
+     public function get_distinct_lob()
 {
     $this->db->distinct();
     $this->db->select('lob');
@@ -107,6 +107,7 @@ class Attendance_model extends CI_Model {
 
     return $query->result();
 }
+
     /**
      * TL-select dropdown ke liye saare active employees (koi bhi kisi
      * ka TL ban sakta hai — abhi tak koi TL assigned na ho tab bhi).
@@ -1040,6 +1041,218 @@ class Attendance_model extends CI_Model {
             $this->db->where('roster_type', $roster_types);
         }
         return $this->db->count_all_results('att_roster_plan');
+    }
+
+    // ------------------------------------------------------------------
+    // AGENT SELF-SERVICE: apna roster dekhna (read-only)
+    // ------------------------------------------------------------------
+
+    public function get_employee_roster_month($emp_id, $month)
+    {
+        $start = $month.'-01';
+        $end = date('Y-m-t', strtotime($start));
+
+        $this->db->select('roster_date, roster_type, wo_type, roster_value, shift_start, shift_end')
+                  ->from('att_roster_plan')
+                  ->where('emp_id', $emp_id)
+                  ->where('roster_date >=', $start)
+                  ->where('roster_date <=', $end)
+                  ->order_by('roster_date', 'ASC');
+        return $this->db->get()->result();
+    }
+
+    // ------------------------------------------------------------------
+    // ROSTER CHANGE REQUESTS (agent → admin approval workflow)
+    // ------------------------------------------------------------------
+
+    /**
+     * Ek code (SHIFT:id / CUSTOM:.. / AWO/TWO/CL/HD/LP/CLEAR) ko
+     * insaano ke padhne layak label me badalta hai — request list me
+     * dikhane ke liye.
+     */
+    private function describe_code($code)
+    {
+        if(empty($code) || $code === 'CLEAR') return '- (Blank)';
+        if($code === 'AWO') return 'Agent Choice WO';
+        if($code === 'TWO') return 'TL Choice WO';
+        if(in_array($code, array('CL','HD','LP'))) return $code;
+
+        if(strpos($code, 'SHIFT:') === 0)
+        {
+            $shift_id = (int)substr($code, 6);
+            $this->db->where('id', $shift_id);
+            $shift = $this->db->get('att_shifts')->row();
+            return $shift ? ($shift->shift_name.' ('.substr($shift->start_time,0,5).'-'.substr($shift->end_time,0,5).')') : 'Deleted preset';
+        }
+        if(strpos($code, 'CUSTOM:') === 0)
+        {
+            return 'Custom '.substr($code, 7);
+        }
+        return $code;
+    }
+
+    /**
+     * Us din ka roster abhi kya hai, uske adhar par current_code snapshot
+     * banata hai — request submit karte waqt "pehle kya tha" record ho.
+     */
+    private function get_current_roster_code($emp_id, $date)
+    {
+        $this->db->where('emp_id', $emp_id)->where('roster_date', $date);
+        $existing = $this->db->get('att_roster_plan')->row();
+        if(!$existing) return 'CLEAR';
+
+        if($existing->roster_type == 'SHIFT')
+        {
+            $this->db->where('start_time', $existing->shift_start)->where('end_time', $existing->shift_end);
+            $preset = $this->db->get('att_shifts')->row();
+            return $preset ? ('SHIFT:'.$preset->id) : ('CUSTOM:'.substr($existing->shift_start,0,5).'-'.substr($existing->shift_end,0,5));
+        }
+        if($existing->roster_type == 'WO')
+        {
+            return ($existing->wo_type == 'TL') ? 'TWO' : 'AWO';
+        }
+        return $existing->roster_type; // CL / HD / LP
+    }
+
+    public function create_roster_change_request($emp_id, $date, $requested_code, $agent_remark)
+    {
+        $current_code = $this->get_current_roster_code($emp_id, $date);
+
+        $this->db->insert('att_roster_change_request', array(
+            'emp_id' => $emp_id,
+            'request_date' => $date,
+            'current_code' => $current_code,
+            'requested_code' => $requested_code,
+            'agent_remark' => $agent_remark,
+            'status' => 'Pending'
+        ));
+        return $this->db->insert_id();
+    }
+
+    public function get_my_roster_requests($emp_id)
+    {
+        $this->db->select('rcr.*, u.user_name as reviewed_by_name')
+                  ->from('att_roster_change_request rcr')
+                  ->join('master_users u', 'u.emp_id = rcr.reviewed_by', 'left')
+                  ->where('rcr.emp_id', $emp_id)
+                  ->order_by('rcr.created_at', 'DESC');
+        $rows = $this->db->get()->result();
+        foreach($rows as $r)
+        {
+            $r->current_label = $this->describe_code($r->current_code);
+            $r->requested_label = $this->describe_code($r->requested_code);
+        }
+        return $rows;
+    }
+
+    public function get_all_roster_requests($status = null)
+    {
+        $this->db->select('rcr.*, e.name, u.msd_id, ru.user_name as reviewed_by_name')
+                  ->from('att_roster_change_request rcr')
+                  ->join('att_employees e', 'e.emp_id = rcr.emp_id')
+                  ->join('master_users u', 'u.emp_id = rcr.emp_id')
+                  ->join('master_users ru', 'ru.emp_id = rcr.reviewed_by', 'left')
+                  ->order_by('rcr.status', 'ASC') // Pending pehle (P < A/R alphabetically... explicit order neeche)
+                  ->order_by('rcr.created_at', 'DESC');
+
+        if($status) $this->db->where('rcr.status', $status);
+
+        $rows = $this->db->get()->result();
+        foreach($rows as $r)
+        {
+            $r->current_label = $this->describe_code($r->current_code);
+            $r->requested_label = $this->describe_code($r->requested_code);
+        }
+
+        // Pending sabse upar dikhane ke liye reorder (Query builder me CASE order easy nahi, isliye PHP me)
+        usort($rows, function($a, $b){
+            if($a->status == $b->status) return strtotime($b->created_at) - strtotime($a->created_at);
+            return ($a->status == 'Pending') ? -1 : (($b->status == 'Pending') ? 1 : 0);
+        });
+
+        return $rows;
+    }
+
+    private function is_leave_code($code)
+    {
+        return in_array($code, array('AWO','TWO','CL','HD','LP'));
+    }
+
+    /**
+     * Weekday/Sunday/Holiday ke max_leave_count cap ke against check karta
+     * hai — sirf tab jab change se ek NAYA leave (WO/CL/HD/LP) add ho raha
+     * ho (Present -> Leave). Leave -> Present hamesha allowed hai (isse
+     * headcount improve hi hota hai).
+     */
+    public function check_capacity_for_leave_change($emp_id, $date, $new_code)
+    {
+        $current_code = $this->get_current_roster_code($emp_id, $date);
+        $was_leave = $this->is_leave_code($current_code);
+        $will_be_leave = $this->is_leave_code($new_code);
+
+        if($will_be_leave && !$was_leave)
+        {
+            $day_type = $this->get_day_type($date);
+            $this->db->where('day_type', $day_type);
+            $target = $this->db->get('att_daily_target')->row();
+            $current_leave_count = $this->count_roster($date, array('WO','CL','HD','LP'));
+
+            if($target && ($current_leave_count + 1) > $target->max_leave_count)
+            {
+                return array(
+                    'ok' => FALSE,
+                    'message' => "Is din ({$day_type}) capacity full hai — already {$current_leave_count}/{$target->max_leave_count} leave/WO/CL diye ja chuke hain."
+                );
+            }
+        }
+
+        return array('ok' => TRUE, 'message' => '');
+    }
+
+    public function approve_roster_request($request_id, $admin_emp_id, $admin_remark, $force = FALSE)
+    {
+        $this->db->where('id', $request_id);
+        $req = $this->db->get('att_roster_change_request')->row();
+
+        if(!$req) return array('ok' => FALSE, 'message' => 'Request nahi mili.');
+        if($req->status != 'Pending') return array('ok' => FALSE, 'message' => 'Ye request pehle hi '.$req->status.' ho chuki hai.');
+
+        if(!$force)
+        {
+            $cap_check = $this->check_capacity_for_leave_change($req->emp_id, $req->request_date, $req->requested_code);
+            if(!$cap_check['ok']) return $cap_check;
+        }
+
+        // apply_roster_value apne aap WO-cap / CL-balance bhi check karega
+        $apply_result = $this->apply_roster_value($req->emp_id, $req->request_date, $req->requested_code);
+        if(!$apply_result['ok']) return $apply_result;
+
+        $this->db->where('id', $request_id)->update('att_roster_change_request', array(
+            'status' => 'Approved',
+            'admin_remark' => $admin_remark,
+            'reviewed_by' => $admin_emp_id,
+            'reviewed_at' => date('Y-m-d H:i:s')
+        ));
+
+        return array('ok' => TRUE, 'message' => 'Approved aur roster update ho gaya.');
+    }
+
+    public function reject_roster_request($request_id, $admin_emp_id, $admin_remark)
+    {
+        $this->db->where('id', $request_id);
+        $req = $this->db->get('att_roster_change_request')->row();
+
+        if(!$req) return array('ok' => FALSE, 'message' => 'Request nahi mili.');
+        if($req->status != 'Pending') return array('ok' => FALSE, 'message' => 'Ye request pehle hi '.$req->status.' ho chuki hai.');
+
+        $this->db->where('id', $request_id)->update('att_roster_change_request', array(
+            'status' => 'Rejected',
+            'admin_remark' => $admin_remark,
+            'reviewed_by' => $admin_emp_id,
+            'reviewed_at' => date('Y-m-d H:i:s')
+        ));
+
+        return array('ok' => TRUE, 'message' => 'Request reject kar di gayi.');
     }
 
     private function resolve_roster_code($code)
