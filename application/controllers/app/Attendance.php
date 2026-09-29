@@ -790,10 +790,16 @@ class Attendance extends CI_Controller {
         $tl_emp_id = $this->input->post('tl_emp_id');
         $gender = trim($this->input->post('gender'));
         $doj = $this->input->post('doj');
+        $inactive_from = $this->input->post('inactive_from');
 
         if($emp_id <= 0 || $name == '')
         {
             echo json_encode(array("response" => FALSE, "message" => "User select karo aur naam bharo."));
+            return;
+        }
+        if($emp_status == 'Inactive' && empty($inactive_from))
+        {
+            echo json_encode(array("response" => FALSE, "message" => "Inactive karne ke liye 'Inactive From' date daalo."));
             return;
         }
 
@@ -806,7 +812,8 @@ class Attendance extends CI_Controller {
             'shift_group' => ($shift_group == 'Evening') ? 'Evening' : (($shift_group == 'Morning') ? 'Morning' : null),
             'gender' => $gender,
             'tl_emp_id' => (!empty($tl_emp_id)) ? (int)$tl_emp_id : null,
-            'doj' => (!empty($doj)) ? $doj : null
+            'doj' => (!empty($doj)) ? $doj : null,
+            'inactive_from' => ($emp_status == 'Inactive' && !empty($inactive_from)) ? $inactive_from : null
         );
 
         $result = $this->Attendance_model->add_employee($data);
@@ -843,6 +850,13 @@ class Attendance extends CI_Controller {
         $tl_emp_id = $this->input->post('tl_emp_id');
         $gender = trim($this->input->post('gender'));
         $doj = $this->input->post('doj');
+        $inactive_from = $this->input->post('inactive_from');
+
+        if($emp_status == 'Inactive' && empty($inactive_from))
+        {
+            echo json_encode(array("response" => FALSE, "message" => "Inactive karne ke liye 'Inactive From' date daalo."));
+            return;
+        }
 
         $data = array(
             'name' => $name,
@@ -852,7 +866,8 @@ class Attendance extends CI_Controller {
             'shift_group' => ($shift_group == 'Evening') ? 'Evening' : (($shift_group == 'Morning') ? 'Morning' : null),
             'gender' => $gender,
             'tl_emp_id' => (!empty($tl_emp_id)) ? (int)$tl_emp_id : null,
-            'doj' => (!empty($doj)) ? $doj : null
+            'doj' => (!empty($doj)) ? $doj : null,
+            'inactive_from' => ($emp_status == 'Inactive' && !empty($inactive_from)) ? $inactive_from : null
         );
 
         $this->Attendance_model->update_employee($emp_id, $data);

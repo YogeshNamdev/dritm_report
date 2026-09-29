@@ -145,6 +145,15 @@
                         </div>
                     </div>
 
+                    <div class="row" id="inactive_from_row" style="display:none;">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Inactive From <small class="text-muted">(is din se Left; isse ek din pehle tak ka data dikhega)</small></label>
+                                <input type="date" class="form-control" id="inactive_from">
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="form-group" id="employee_err_msg"></div>
 
                 </form>
@@ -196,7 +205,7 @@ function get_employees()
                 txt += "<td>"+escapeHtml(r.lob || '-')+"</td>";
                 txt += "<td>"+escapeHtml(r.tl_name || '-')+"</td>";
                 txt += "<td>"+r.employment_type+"</td>";
-                txt += "<td>"+r.emp_status+"</td>";
+                txt += "<td>"+r.emp_status+(r.emp_status == 'Inactive' && r.inactive_from ? " <small class='text-muted'>(from "+r.inactive_from+")</small>" : "")+"</td>";
                 txt += "<td>"+(r.shift_group || '-')+"</td>";
                 txt += "<td><button type='button' class='btn btn-sm btn-info' onclick='open_edit_model("+r.emp_id+")'>Edit</button></td>";
                 txt += "</tr>";
@@ -215,7 +224,17 @@ function reset_employee_form()
     $("#emp_id").val("").trigger("change");
     $("#tl_emp_id").val("").trigger("change");
     $("#employee_err_msg").html("");
+    toggle_inactive_from();
 }
+
+function toggle_inactive_from()
+{
+    var inactive = $("#emp_status").val() == "Inactive";
+    $("#inactive_from_row").toggle(inactive);
+    if(!inactive){ $("#inactive_from").val(""); }
+}
+
+$(document).on("change", "#emp_status", toggle_inactive_from);
 
 function open_add_model()
 {
@@ -273,6 +292,8 @@ function open_edit_model(emp_id)
     $("#shift_group").val(row.shift_group || "");
     $("#gender").val(row.gender || "");
     $("#doj").val(row.doj || "");
+    $("#inactive_from").val(row.inactive_from || "");
+    toggle_inactive_from();
     $("#tl_emp_id").val(row.tl_emp_id || "").trigger("change");
 
     $("#employee_model").modal("show");
@@ -306,7 +327,7 @@ function submit_employee()
             emp_id: emp_id, name: name, lob: $("#lob").val(),
             employment_type: $("#employment_type").val(), emp_status: $("#emp_status").val(),
             shift_group: $("#shift_group").val(), tl_emp_id: $("#tl_emp_id").val(),
-            gender: $("#gender").val(), doj: $("#doj").val()
+            gender: $("#gender").val(), doj: $("#doj").val(), inactive_from: $("#inactive_from").val()
         },
         cache: false,
         success: function(data){

@@ -10,6 +10,7 @@
         --mx-wo-bg: #eef0f3; --mx-wo-fg: #5a6472; --mx-wo-bd: #d7dbe0;
         --mx-cl-bg: #e7f3ff; --mx-cl-fg: #0b5ea8; --mx-cl-bd: #b6dcff;
         --mx-lv-bg: #f1e9fb; --mx-lv-fg: #6c3fa8; --mx-lv-bd: #dcc7f2;
+        --mx-left-bg: #f3e3e3; --mx-left-fg: #8a3b3b; --mx-left-bd: #e2c4c4;
         --mx-in-bg: #e9ebee; --mx-in-fg: #495057; --mx-in-bd: #ced4da;
         --mx-weekend: #fff9ec;
     }
@@ -25,6 +26,7 @@
     .mx-legend .chip.aa { background: var(--mx-aa-bg); color: var(--mx-aa-fg); border-color: var(--mx-aa-bd); }
     .mx-legend .chip.wo { background: var(--mx-wo-bg); color: var(--mx-wo-fg); border-color: var(--mx-wo-bd); }
     .mx-legend .chip.cl { background: var(--mx-cl-bg); color: var(--mx-cl-fg); border-color: var(--mx-cl-bd); }
+    .mx-legend .chip.left { background: var(--mx-left-bg); color: var(--mx-left-fg); border-color: var(--mx-left-bd); }
     .mx-legend .chip.lv { background: var(--mx-lv-bg); color: var(--mx-lv-fg); border-color: var(--mx-lv-bd); }
 
     #matrix_wrap { overflow: auto; max-height: 68vh; border: 1px solid #e3e6ea; border-radius: 8px; }
@@ -54,6 +56,7 @@
     .mx-badge.WO { background: var(--mx-wo-bg); color: var(--mx-wo-fg); border-color: var(--mx-wo-bd); }
     .mx-badge.CL { background: var(--mx-cl-bg); color: var(--mx-cl-fg); border-color: var(--mx-cl-bd); }
     .mx-badge.Leave { background: var(--mx-lv-bg); color: var(--mx-lv-fg); border-color: var(--mx-lv-bd); }
+    .mx-badge.Left { background: var(--mx-left-bg); color: var(--mx-left-fg); border-color: var(--mx-left-bd); }
     .mx-badge.Inactive { background: var(--mx-in-bg); color: var(--mx-in-fg); border-color: var(--mx-in-bd); }
     .mx-badge.blank { background: transparent; color: #ced4da; border: none; }
 
@@ -121,6 +124,7 @@
                         <span class="chip wo">Week Off</span>
                         <span class="chip cl">CL</span>
                         <span class="chip lv">Leave</span>
+                        <span class="chip left">Left</span>
                     </div>
 
                     <div id="matrix_wrap"><div class="mx-empty-state"><i class="fa fa-spinner fa-spin"></i> Loading...</div></div>

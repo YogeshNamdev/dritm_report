@@ -16,11 +16,35 @@ class Attendance_model extends CI_Model {
     // MASTER / LOOKUP HELPERS
     // ------------------------------------------------------------------
 
+    // ---- LEFT / INACTIVE RULE ----
+    // Employee 'Inactive' hone par admin 'inactive_from' date deta hai.
+    // inactive_from se pehle ke din normal (roster/attendance/headcount me
+    // count), us din aur uske baad 'Left' — kisi bhi count me nahi.
+    // (Inactive par inactive_from khali ho to poori tarah left maana jata hai.)
+
+    /** SQL: employee $alias, $date_expr wale din left hai */
+    private function sql_left_on($alias, $date_expr)
+    {
+        return "({$alias}.emp_status = 'Inactive' AND ({$alias}.inactive_from IS NULL OR {$date_expr} >= {$alias}.inactive_from))";
+    }
+
+    /** SQL: employee us din active (count hone layak) hai */
+    private function sql_active_on($alias, $date_expr)
+    {
+        return "NOT ".$this->sql_left_on($alias, $date_expr);
+    }
+
+    private function is_left_on($emp, $date)
+    {
+        return $emp->emp_status == 'Inactive' && (empty($emp->inactive_from) || $date >= $emp->inactive_from);
+    }
+
     public function get_all_att_employees()
     {
         $this->db->select('e.emp_id, e.name, e.lob, e.employment_type, u.msd_id, u.user_name')
                   ->from('att_employees e')
                   ->join('master_users u', 'u.emp_id = e.emp_id')
+                  ->where('e.tl_emp_id IS NOT NULL', null, false) // TL agent nahi hai
                   ->order_by('e.name', 'ASC');
         return $this->db->get()->result();
     }
@@ -63,7 +87,23 @@ class Attendance_model extends CI_Model {
 
     public function update_employee($emp_id, $data)
     {
-        return $this->db->where('emp_id', $emp_id)->update('att_employees', $data);
+        $old = $this->db->where('emp_id', $emp_id)->get('att_employees')->row();
+
+        $result = $this->db->where('emp_id', $emp_id)->update('att_employees', $data);
+
+        // Status / inactive_from badla ho to is employee ki saari attendance dobara compute karo
+        // taaki 'Left' / normal status sahi dino par lage (reactivate par wapas normal ho jaye).
+        $new_status = isset($data['emp_status']) ? $data['emp_status'] : ($old ? $old->emp_status : null);
+        if(($old && $old->emp_status == 'Inactive') || $new_status == 'Inactive')
+        {
+            $this->db->select('attendance_date')->from('att_attendance_daily')->where('emp_id', $emp_id);
+            $dates = $this->db->get()->result();
+            foreach($dates as $d)
+            {
+                $this->recompute_attendance_daily($emp_id, $d->attendance_date);
+            }
+        }
+        return $result;
     }
 
     public function get_employee($emp_id)
@@ -75,7 +115,7 @@ class Attendance_model extends CI_Model {
         return $this->db->get()->row();
     }
 
-     public function get_distinct_lob()
+      public function get_distinct_lob()
 {
     $this->db->distinct();
     $this->db->select('lob');
@@ -114,7 +154,10 @@ class Attendance_model extends CI_Model {
      */
     public function get_all_employees_for_tl_dropdown()
     {
-        $this->db->select('emp_id, name')->from('att_employees')->order_by('name', 'ASC');
+        // sirf TL (tl_emp_id NULL) hi kisi ka TL ban sakta hai
+        $this->db->select('emp_id, name')->from('att_employees')
+                  ->where('tl_emp_id IS NULL', null, false)
+                  ->order_by('name', 'ASC');
         return $this->db->get()->result();
     }
 
@@ -173,6 +216,7 @@ class Attendance_model extends CI_Model {
         $skipped_count = 0;
         $errors = array();
         $row_num = 1;
+        $dates_seen = array(); // upload me jo bhi dates aayi, un sabke liye baad me poora recompute karenge
 
         foreach($rows as $row)
         {
@@ -236,8 +280,19 @@ class Attendance_model extends CI_Model {
             // seedha att_attendance_daily.net_login_minutes bhi refresh kar do (agar ek se zyada campaign ho to sum)
             $this->refresh_net_login_for_emp_date($emp_id, $log_date);
             $this->recompute_attendance_daily($emp_id, $log_date);
+            $dates_seen[$log_date] = TRUE;
 
             $success_count++;
+        }
+
+        // FIX: kisi bhi agent ka us din Raw Report me record hi na ho (jaise CL/WO/LP
+        // wale din login hota hi nahi), to bhi uska status roster ke hisaab se sahi
+        // dikhna chahiye — isliye upload ki poori date-range ke liye HAR active agent
+        // ka status ek baar force-recompute kar dete hain (login na ho to bhi roster
+        // wala WO/CL/LP/HD ya AA sahi ban jayega, blank nahi rahega).
+        if(!empty($dates_seen))
+        {
+            $this->recompute_all_for_dates(array_keys($dates_seen));
         }
 
         return array(
@@ -246,6 +301,24 @@ class Attendance_model extends CI_Model {
             'skipped_count' => $skipped_count,
             'errors' => $errors
         );
+    }
+
+    /**
+     * Har active agent (TL chhod ke) ke liye di gayi dates pe status
+     * recompute karta hai — chahe us din login record ho ya na ho.
+     */
+    private function recompute_all_for_dates($dates)
+    {
+        $this->db->select('emp_id')->from('att_employees')->where('tl_emp_id IS NOT NULL', null, false);
+        $employees = $this->db->get()->result();
+
+        foreach($dates as $date)
+        {
+            foreach($employees as $e)
+            {
+                $this->recompute_attendance_daily($e->emp_id, $date);
+            }
+        }
     }
 
     private function refresh_net_login_for_emp_date($emp_id, $date)
@@ -580,10 +653,12 @@ class Attendance_model extends CI_Model {
         $start = $month.'-01';
         $end = date('Y-m-t', strtotime($start));
 
-        $this->db->select('e.emp_id, e.name, e.lob, e.shift_group, u.msd_id, t.name as tl_name')
+        $this->db->select('e.emp_id, e.name, e.lob, e.shift_group, e.emp_status, e.inactive_from, u.msd_id, t.name as tl_name')
                   ->from('att_employees e')
                   ->join('master_users u', 'u.emp_id = e.emp_id')
                   ->join('att_employees t', 't.emp_id = e.tl_emp_id', 'left')
+                  ->where('e.tl_emp_id IS NOT NULL', null, false) // TL roster grid me nahi aayenge
+                  ->where($this->sql_active_on('e', $this->db->escape($start)), null, false) // pura mahina left ho chuka to row hi nahi
                   ->order_by('e.name', 'ASC');
 
         if($shift_group) $this->db->where('e.shift_group', $shift_group);
@@ -635,7 +710,11 @@ class Attendance_model extends CI_Model {
             );
             foreach($date_columns as $d)
             {
-                if(isset($roster_map[$e->emp_id][$d]))
+                if($this->is_left_on($e, $d))
+                {
+                    $row['days'][$d] = array('left' => TRUE);
+                }
+                else if(isset($roster_map[$e->emp_id][$d]))
                 {
                     $r = $roster_map[$e->emp_id][$d];
                     $row['days'][$d] = array(
@@ -667,6 +746,12 @@ class Attendance_model extends CI_Model {
      */
     public function apply_roster_value($emp_id, $date, $code)
     {
+        $emp = $this->db->select('emp_status, inactive_from')->where('emp_id', $emp_id)->get('att_employees')->row();
+        if($emp && $this->is_left_on($emp, $date))
+        {
+            return array('ok' => FALSE, 'message' => 'Employee is date par left hai — roster nahi ban sakta.');
+        }
+
         $this->db->where('emp_id', $emp_id)->where('roster_date', $date);
         $existing = $this->db->get('att_roster_plan')->row();
 
@@ -858,7 +943,7 @@ class Attendance_model extends CI_Model {
     {
         $month_start = $month.'-01';
 
-        $this->db->select('emp_id')->from('att_employees')->where('emp_status', 'Active');
+        $this->db->select('emp_id')->from('att_employees')->where('emp_status', 'Active')->where('tl_emp_id IS NOT NULL', null, false);
         $employees = $this->db->get()->result();
 
         $accrued = 0;
@@ -909,6 +994,7 @@ class Attendance_model extends CI_Model {
                   ->from('att_employees e')
                   ->join('master_users u', 'u.emp_id = e.emp_id')
                   ->join('att_cl_balance cb', 'cb.emp_id = e.emp_id', 'left')
+                  ->where('e.tl_emp_id IS NOT NULL', null, false)
                   ->order_by('e.name', 'ASC');
         $rows = $this->db->get()->result();
 
@@ -967,7 +1053,9 @@ class Attendance_model extends CI_Model {
         $this->db->where('day_type', $day_type);
         $target = $this->db->get('att_daily_target')->row();
 
-        $total_headcount = $this->db->where('emp_status', 'Active')->count_all_results('att_employees');
+        $total_headcount = $this->db->where('tl_emp_id IS NOT NULL', null, false)
+                                    ->where("(emp_status = 'Active' OR (emp_status = 'Inactive' AND inactive_from IS NOT NULL AND inactive_from > ".$this->db->escape($date)."))", null, false)
+                                    ->count_all_results('att_employees');
         $planned_present = $this->count_roster($date, 'SHIFT');
         $planned_leave = $this->count_roster($date, array('WO','CL','HD','LP'));
 
@@ -987,6 +1075,8 @@ class Attendance_model extends CI_Model {
             $this->db->select('COUNT(*) as cnt')->from('att_roster_plan rp')
                       ->join('att_employees e', 'e.emp_id = rp.emp_id')
                       ->where('rp.roster_date', $date)->where('rp.roster_type', 'SHIFT')
+                      ->where('e.tl_emp_id IS NOT NULL', null, false)
+                      ->where($this->sql_active_on('e', 'rp.roster_date'), null, false)
                       ->where('e.shift_group', $st->shift_group);
 
             if($st->shift_start !== null) $this->db->where('rp.shift_start', $st->shift_start);
@@ -1006,6 +1096,8 @@ class Attendance_model extends CI_Model {
             $this->db->select('COUNT(*) as cnt')->from('att_roster_plan rp')
                       ->join('att_employees e', 'e.emp_id = rp.emp_id')
                       ->where('rp.roster_date', $date)->where('rp.roster_type', 'SHIFT')
+                      ->where('e.tl_emp_id IS NOT NULL', null, false)
+                      ->where($this->sql_active_on('e', 'rp.roster_date'), null, false)
                       ->where('e.lob', $lt->lob);
 
             if($lt->shift_start !== null) $this->db->where('rp.shift_start', $lt->shift_start);
@@ -1022,6 +1114,8 @@ class Attendance_model extends CI_Model {
         $this->db->select('COUNT(*) as cnt')->from('att_roster_plan rp')
                   ->join('att_employees e', 'e.emp_id = rp.emp_id')
                   ->where('rp.roster_date', $date)->where('rp.roster_type', 'SHIFT')
+                  ->where('e.tl_emp_id IS NOT NULL', null, false)
+                  ->where($this->sql_active_on('e', 'rp.roster_date'), null, false)
                   ->where_in('e.lob', $catch_all_lobs);
         $catch_all_actual = (int)$this->db->get()->row()->cnt;
         $report['lob'][] = array('label' => 'Inbound / Himseva manual Inbound / Himseva manual preview (no cap)', 'target' => '-', 'actual' => $catch_all_actual, 'ok' => TRUE);
@@ -1031,16 +1125,21 @@ class Attendance_model extends CI_Model {
 
     private function count_roster($date, $roster_types)
     {
-        $this->db->where('roster_date', $date);
+        // TL (tl_emp_id NULL) kabhi count nahi hote — sirf agents
+        $this->db->from('att_roster_plan rp')
+                  ->join('att_employees e', 'e.emp_id = rp.emp_id')
+                  ->where('e.tl_emp_id IS NOT NULL', null, false)
+                  ->where($this->sql_active_on('e', 'rp.roster_date'), null, false)
+                  ->where('rp.roster_date', $date);
         if(is_array($roster_types))
         {
-            $this->db->where_in('roster_type', $roster_types);
+            $this->db->where_in('rp.roster_type', $roster_types);
         }
         else
         {
-            $this->db->where('roster_type', $roster_types);
+            $this->db->where('rp.roster_type', $roster_types);
         }
-        return $this->db->count_all_results('att_roster_plan');
+        return $this->db->count_all_results();
     }
 
     // ------------------------------------------------------------------
@@ -1305,15 +1404,17 @@ class Attendance_model extends CI_Model {
     // CORE STATUS COMPUTATION (Excel column V formula ka equivalent)
     // ------------------------------------------------------------------
 
+    const DEFAULT_LOGIN_TARGET_MINUTES = 420; // 7 hr — jo campaign list me nahi hai unke liye
+
     public function recompute_attendance_daily($emp_id, $date)
     {
         // employee master
-        $this->db->select('emp_status, employment_type')->from('att_employees')->where('emp_id', $emp_id);
+        $this->db->select('emp_status, employment_type, inactive_from')->from('att_employees')->where('emp_id', $emp_id);
         $emp = $this->db->get()->row();
         if(!$emp) return FALSE;
 
-        // roster (ab poora row chahiye — roster_type + login_target_minutes bhi)
-        $this->db->select('roster_value, roster_type, wo_type, login_target_minutes')
+        // roster — sirf WO/CL/LP/HD wale din ke liye status force karta hai
+        $this->db->select('roster_value, roster_type, wo_type, shift_start')
                   ->from('att_roster_plan')->where('emp_id', $emp_id)->where('roster_date', $date);
         $roster = $this->db->get()->row();
 
@@ -1328,7 +1429,13 @@ class Attendance_model extends CI_Model {
 
         $total_login_minutes = $net_login_minutes + $exception_minutes;
 
-        $final_status = $this->compute_final_status($emp->emp_status, $roster, $total_login_minutes);
+        // Us din ka dominant campaign (Raw Report se) aur usi ke hisaab se target
+        $dominant_campaign = $this->get_dominant_campaign($emp_id, $date);
+        $campaign_key = $this->match_campaign_key($dominant_campaign, $roster);
+        $day_type = $this->get_day_type($date);
+        $applied_target = $campaign_key ? $this->resolve_campaign_target($campaign_key, $day_type) : self::DEFAULT_LOGIN_TARGET_MINUTES;
+
+        $final_status = $this->compute_final_status($emp, $date, $roster, $total_login_minutes, $applied_target);
         $weight = ($emp->employment_type == 'PT') ? 0.5 : 1.0;
 
         $data = array(
@@ -1337,6 +1444,8 @@ class Attendance_model extends CI_Model {
             'roster_value' => $roster ? $roster->roster_value : '',
             'roster_type' => $roster ? $roster->roster_type : null,
             'wo_type' => ($roster && isset($roster->wo_type)) ? $roster->wo_type : null,
+            'applied_campaign' => $dominant_campaign,
+            'applied_target_minutes' => $applied_target,
             'final_status' => $final_status,
             'weight' => $weight
         );
@@ -1353,18 +1462,62 @@ class Attendance_model extends CI_Model {
         return $this->db->insert('att_attendance_daily', $data);
     }
 
-    // Naye roster (wide-grid) ke hisaab se revised status logic:
-    //   Inactive          -> 'Inactive'
-    //   roster_type = WO  -> 'WO'   (chahe Agent Choice ho ya TL Choice, dono WO hi maane jaate hain)
-    //   roster_type = CL  -> 'CL'
-    //   roster_type = LP  -> 'Leave'
-    //   roster_type = HD  -> 'HD'   (pre-planned half-day, login count check kiye bina forced)
-    //   roster_type = SHIFT (ya us din koi roster hi nahi mila) -> login-minutes ke against
-    //   compute karo — target us din ki shift-length se aata hai (roster.login_target_minutes),
-    //   na mile to purane fixed default (420 min) pe fallback.
-    private function compute_final_status($emp_status, $roster, $total_login_minutes)
+    /** Us din agent ne jis campaign par sabse zyada net-login diya, wahi 'dominant' campaign maana jata hai */
+    private function get_dominant_campaign($emp_id, $date)
     {
-        if($emp_status == 'Inactive') return 'Inactive';
+        $this->db->select('rcl.campaign')
+                  ->from('att_raw_call_logs rcl')
+                  ->join('master_users u', 'u.msd_id = rcl.agent_username')
+                  ->where('u.emp_id', $emp_id)
+                  ->where('rcl.log_date', $date)
+                  ->order_by('rcl.net_login_duration_minutes', 'DESC')
+                  ->limit(1);
+        $row = $this->db->get()->row();
+        return $row ? $row->campaign : null;
+    }
+
+    /**
+     * Raw Report ki campaign string ko att_campaign_login_target ki key se
+     * match karta hai (spaces/underscore hata ke, lowercase, contains-check).
+     * 'Night Shift' sirf tab match hota hai jab campaign HRTC/Disaster ho
+     * AUR roster shift 22:00 se start hoti ho (raw data me literal 'night
+     * shift' naam nahi aata, ye waqt + campaign dono se pehchana jata hai).
+     */
+    private function match_campaign_key($raw_campaign, $roster)
+    {
+        if(empty($raw_campaign)) return null;
+        $norm = strtolower(preg_replace('/[^a-z0-9]/i', '', $raw_campaign));
+
+        if(strpos($norm, 'foodsupply') !== false || strpos($norm, 'fcs') !== false) return 'FCS';
+        if(strpos($norm, 'officerhelpdesk') !== false) return 'Officer Helpdesk';
+        if(strpos($norm, 'ddtg') !== false) return 'DDTG_Helpline';
+
+        $is_hrtc_or_disaster = (strpos($norm, 'hrtc') !== false || strpos($norm, 'disaster') !== false);
+        if($is_hrtc_or_disaster && $roster && !empty($roster->shift_start) && substr($roster->shift_start, 0, 2) == '22')
+        {
+            return 'Night Shift';
+        }
+
+        return null; // list me nahi — default 7hr fallback lagega
+    }
+
+    private function resolve_campaign_target($campaign_key, $day_type)
+    {
+        $this->db->where('campaign_key', $campaign_key)
+                  ->where("(day_type = {$this->db->escape($day_type)} OR day_type IS NULL)", null, false)
+                  ->order_by("(day_type IS NULL)", "ASC", false)
+                  ->limit(1);
+        $row = $this->db->get('att_campaign_login_target')->row();
+        return $row ? (int)$row->target_minutes : self::DEFAULT_LOGIN_TARGET_MINUTES;
+    }
+
+    // Status logic:
+    //   Left / Inactive   -> forced
+    //   roster_type WO/CL/LP/HD -> roster jaisa hi bana rehta hai (login count check nahi hota)
+    //   baaki sab din -> $target (campaign-based, upar resolve hua) ke against P/HD/AA
+    private function compute_final_status($emp, $date, $roster, $total_login_minutes, $target)
+    {
+        if($this->is_left_on($emp, $date)) return 'Left';
 
         $roster_type = $roster ? $roster->roster_type : null;
 
@@ -1373,7 +1526,6 @@ class Attendance_model extends CI_Model {
         if($roster_type == 'LP') return 'Leave';
         if($roster_type == 'HD') return 'HD';
 
-        $target = ($roster && $roster->login_target_minutes) ? (int)$roster->login_target_minutes : self::P_MIN_MINUTES;
         $half_target = $target / 2;
 
         if($total_login_minutes >= $half_target && $total_login_minutes < $target) return 'HD';
@@ -1390,10 +1542,12 @@ class Attendance_model extends CI_Model {
         $start = $month.'-01';
         $end = date('Y-m-t', strtotime($start));
 
-        $this->db->select('e.emp_id, e.name, e.lob, u.msd_id, t.name as tl_name')
+        $this->db->select('e.emp_id, e.name, e.lob, e.emp_status, e.inactive_from, u.msd_id, t.name as tl_name')
                   ->from('att_employees e')
                   ->join('master_users u', 'u.emp_id = e.emp_id')
                   ->join('att_employees t', 't.emp_id = e.tl_emp_id', 'left')
+                  ->where('e.tl_emp_id IS NOT NULL', null, false) // TL matrix me nahi
+                  ->where($this->sql_active_on('e', $this->db->escape($start)), null, false) // pichle mahine left ho chuke ho to nahi
                   ->order_by('e.name', 'ASC');
 
         if($filter_emp_id)
@@ -1458,6 +1612,7 @@ class Attendance_model extends CI_Model {
             foreach($date_columns as $d)
             {
                 $status = isset($status_map[$e->emp_id][$d]) ? $status_map[$e->emp_id][$d] : '-';
+                if($this->is_left_on($e, $d)) $status = 'Left';
                 $row['days'][$d] = $status;
                 if($status == 'P') $row['present_count']++;
                 if($status == 'AA') $row['absent_count']++;
@@ -1484,11 +1639,13 @@ class Attendance_model extends CI_Model {
                     t.name AS tl_name,
                     ad.attendance_date,
                     SUM(ad.weight) AS headcount,
-                    SUM(CASE WHEN ad.final_status IN ('HD','AA','Leave') THEN ad.weight ELSE 0 END) AS shrink_weight
+                    SUM(CASE WHEN ad.final_status IN ('AA','Leave') THEN ad.weight WHEN ad.final_status = 'HD' THEN ad.weight * 0.5 ELSE 0 END) AS shrink_weight
                 FROM att_attendance_daily ad
                 JOIN att_employees e ON e.emp_id = ad.emp_id
                 LEFT JOIN att_employees t ON t.emp_id = e.tl_emp_id
                 WHERE ad.attendance_date BETWEEN ? AND ?
+                  AND e.tl_emp_id IS NOT NULL
+                  AND {$this->sql_active_on('e','ad.attendance_date')}
                 GROUP BY t.name, ad.attendance_date
                 ORDER BY t.name, ad.attendance_date";
 
@@ -1534,13 +1691,15 @@ class Attendance_model extends CI_Model {
                     SUM(ad.weight) AS hc,
                     SUM(CASE WHEN ad.final_status = 'WO' THEN ad.weight ELSE 0 END) AS wo,
                     SUM(CASE WHEN ad.final_status = 'P' THEN ad.weight ELSE 0 END) AS p_count,
-                    SUM(CASE WHEN ad.final_status = 'HD' THEN ad.weight ELSE 0 END) AS hd_count,
+                    SUM(CASE WHEN ad.final_status = 'HD' THEN ad.weight * 0.5 ELSE 0 END) AS hd_count,
                     SUM(CASE WHEN ad.final_status = 'AA' THEN ad.weight ELSE 0 END) AS ab_count,
                     SUM(CASE WHEN ad.final_status = 'Leave' THEN ad.weight ELSE 0 END) AS leave_count
                 FROM att_attendance_daily ad
                 JOIN att_employees e ON e.emp_id = ad.emp_id
                 {$join_extra}
                 WHERE ad.attendance_date BETWEEN ? AND ?
+                  AND e.tl_emp_id IS NOT NULL
+                  AND {$this->sql_active_on('e','ad.attendance_date')}
                 GROUP BY {$group_col}
                 ORDER BY {$group_col}";
 
@@ -1577,11 +1736,14 @@ class Attendance_model extends CI_Model {
                     ad.attendance_date,
                     SUM(ad.weight) AS hc,
                     SUM(CASE WHEN ad.final_status = 'WO' THEN ad.weight ELSE 0 END) AS wo,
-                    SUM(CASE WHEN ad.final_status = 'HD' THEN ad.weight ELSE 0 END) AS hd_count,
+                    SUM(CASE WHEN ad.final_status = 'HD' THEN ad.weight * 0.5 ELSE 0 END) AS hd_count,
                     SUM(CASE WHEN ad.final_status = 'AA' THEN ad.weight ELSE 0 END) AS ab_count,
                     SUM(CASE WHEN ad.final_status = 'Leave' THEN ad.weight ELSE 0 END) AS leave_count
                 FROM att_attendance_daily ad
+                JOIN att_employees e ON e.emp_id = ad.emp_id
                 WHERE ad.attendance_date BETWEEN ? AND ?
+                  AND e.tl_emp_id IS NOT NULL
+                  AND {$this->sql_active_on('e','ad.attendance_date')}
                 GROUP BY ad.attendance_date
                 ORDER BY ad.attendance_date";
 

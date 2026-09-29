@@ -52,6 +52,7 @@
     .cell-select.type-LP    { background: var(--rb-lp-bg);    color: var(--rb-lp-fg);    border-color: var(--rb-lp-bd); }
     .cell-select.type- { color: var(--rb-blank-fg); }
 
+    .rb-left { display:inline-block; width:96px; text-align:center; font-size:11px; padding:3px 4px; border-radius:5px; background:#f3e3e3; color:#8a3b3b; border:1px dashed #e2c4c4; }
     .preset-chip { display:inline-flex; align-items:center; background:#eef0f3; border-radius:16px; padding:4px 6px 4px 12px; margin:3px; font-size:12.5px; color:#3a4453; }
     .preset-chip .del { color:#c0392b; cursor:pointer; margin-left:8px; font-weight:bold; padding:0 6px; border-radius:50%; }
     .preset-chip .del:hover { background:#fdeaea; }
@@ -457,8 +458,12 @@ function renderGrid()
 
         DATE_COLUMNS.forEach(function(d){
             var dayData = r.days[d];
-            var opt = cellOptionsHtml(dayData);
             var wknd = isWeekend(d);
+            if(dayData && dayData.left){
+                txt += "<td class='"+(wknd?'rb-weekend':'')+"'><span class='rb-left'>Left</span></td>";
+                return;
+            }
+            var opt = cellOptionsHtml(dayData);
             txt += "<td class='"+(wknd?'rb-weekend':'')+"'><select class='cell-select type-"+opt.type+"' data-emp='"+r.emp_id+"' data-date='"+d+"' onchange='cellChanged(this);'>"+opt.html+"</select></td>";
         });
 
