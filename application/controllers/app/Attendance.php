@@ -270,6 +270,38 @@ class Attendance extends CI_Controller {
         $this->load->view('app/templates/footer', $data);
     }
 
+    public function wo_cl_preference($page = "wo_cl_preference")
+    {
+        $data = array();
+        if(!file_exists(APPPATH.'views/attendance/'.$page.'.php'))
+        {
+            show_404();
+        }
+        $data["title"] = "WO / CL Preference";
+        $this->load->view('app/templates/header', $data);
+        $this->load->view('app/templates/side_panel', $data);
+        $this->load->view('attendance/'.$page, $data);
+        $this->load->view('app/templates/footer', $data);
+    }
+
+    public function preference_overview($page = "preference_overview")
+    {
+        if(!$this->is_admin())
+        {
+            show_error('You are not authorized to access this page.', 403);
+        }
+        $data = array();
+        if(!file_exists(APPPATH.'views/attendance/'.$page.'.php'))
+        {
+            show_404();
+        }
+        $data["title"] = "WO / CL Preference Overview";
+        $this->load->view('app/templates/header', $data);
+        $this->load->view('app/templates/side_panel', $data);
+        $this->load->view('attendance/'.$page, $data);
+        $this->load->view('app/templates/footer', $data);
+    }
+
     // ------------------------------------------------------------------
     // AJAX: FILE UPLOAD (RAW REPORT / ROSTER)
     // ------------------------------------------------------------------
@@ -1057,6 +1089,75 @@ class Attendance extends CI_Controller {
 
         $result = $this->Attendance_model->reject_roster_request($request_id, $this->current_emp_id(), $admin_remark);
         echo json_encode(array("response" => $result['ok'], "message" => $result['message']));
+    }
+
+    // ------------------------------------------------------------------
+    // AJAX: WO / CL PREFERENCE — AGENT SIDE
+    // ------------------------------------------------------------------
+
+    public function save_wo_cl_preference()
+    {
+        $for_month = $this->input->post('for_month');
+        $wo_dates = $this->input->post('wo_dates'); // array, max 4
+        $cl_dates = $this->input->post('cl_dates'); // array
+        $remark = trim($this->input->post('remark'));
+
+        if(empty($for_month))
+        {
+            echo json_encode(array("response" => FALSE, "message" => "Month select karo."));
+            return;
+        }
+
+        $wo_dates = is_array($wo_dates) ? array_slice(array_values(array_filter($wo_dates)), 0, 4) : array();
+        $cl_dates = is_array($cl_dates) ? array_values(array_filter($cl_dates)) : array();
+
+        if(count($wo_dates) == 0 && count($cl_dates) == 0)
+        {
+            echo json_encode(array("response" => FALSE, "message" => "Kam se kam 1 WO ya CL date select karo."));
+            return;
+        }
+        if(count($wo_dates) > 0 && count($wo_dates) < 4)
+        {
+            echo json_encode(array("response" => FALSE, "message" => "WO preference me pure 4 dates deni zaroori hain."));
+            return;
+        }
+
+        // agent hamesha apna hi emp_id use karega
+        $this->Attendance_model->save_wo_cl_preferences($this->current_emp_id(), $for_month, $wo_dates, $cl_dates, $remark);
+
+        echo json_encode(array("response" => TRUE, "message" => "Preference submit ho gayi."));
+    }
+
+    public function get_my_wo_cl_preference()
+    {
+        $for_month = $this->input->post('for_month');
+        if(empty($for_month))
+        {
+            echo json_encode(array("response" => FALSE, "message" => "Month required."));
+            return;
+        }
+        $rows = $this->Attendance_model->get_my_wo_cl_preferences($this->current_emp_id(), $for_month);
+        echo json_encode(array("response" => TRUE, "total_record" => count($rows), "all_record" => $rows));
+    }
+
+    // ------------------------------------------------------------------
+    // AJAX: WO / CL PREFERENCE — ADMIN OVERVIEW
+    // ------------------------------------------------------------------
+
+    public function get_preference_overview()
+    {
+        if(!$this->is_admin())
+        {
+            return $this->deny_json();
+        }
+        $for_month = $this->input->post('for_month');
+        if(empty($for_month))
+        {
+            echo json_encode(array("response" => FALSE, "message" => "Month required."));
+            return;
+        }
+        $rows = $this->Attendance_model->get_preference_overview($for_month);
+        echo json_encode(array("response" => TRUE, "total_record" => count($rows), "all_record" => $rows));
     }
 
 }

@@ -115,7 +115,7 @@ class Attendance_model extends CI_Model {
         return $this->db->get()->row();
     }
 
-      public function get_distinct_lob()
+    public function get_distinct_lob()
 {
     $this->db->distinct();
     $this->db->select('lob');
@@ -1352,6 +1352,109 @@ class Attendance_model extends CI_Model {
         ));
 
         return array('ok' => TRUE, 'message' => 'Request reject kar di gayi.');
+    }
+
+    // ------------------------------------------------------------------
+    // WO / CL PREFERENCE COLLECTION (roster banne se pehle, planning ke liye)
+    // ------------------------------------------------------------------
+
+    /**
+     * Agent ki is mahine ke liye submission save karta hai — resubmit karne
+     * par purani entries replace ho jaati hain (overwrite), reference/
+     * planning data hai, isse roster khud nahi banta.
+     */
+    public function save_wo_cl_preferences($emp_id, $for_month, $wo_dates, $cl_dates, $remark)
+    {
+        $this->db->where('emp_id', $emp_id)->where('for_month', $for_month)->delete('att_wo_cl_preference');
+
+        $priority = 1;
+        foreach($wo_dates as $d)
+        {
+            $d = trim($d);
+            if($d == '') continue;
+            $this->db->insert('att_wo_cl_preference', array(
+                'emp_id' => $emp_id, 'for_month' => $for_month, 'pref_type' => 'WO',
+                'pref_date' => $d, 'priority' => $priority, 'remark' => $remark
+            ));
+            $priority++;
+        }
+
+        foreach($cl_dates as $d)
+        {
+            $d = trim($d);
+            if($d == '') continue;
+            $this->db->insert('att_wo_cl_preference', array(
+                'emp_id' => $emp_id, 'for_month' => $for_month, 'pref_type' => 'CL',
+                'pref_date' => $d, 'priority' => null, 'remark' => $remark
+            ));
+        }
+
+        return TRUE;
+    }
+
+    public function get_my_wo_cl_preferences($emp_id, $for_month)
+    {
+        $this->db->where('emp_id', $emp_id)->where('for_month', $for_month)
+                  ->order_by('pref_type', 'ASC')->order_by('priority', 'ASC');
+        return $this->db->get('att_wo_cl_preference')->result();
+    }
+
+    /**
+     * Admin ke liye consolidated view — mahine ki har date pe kitne agents
+     * WO/CL maang rahe hain, us din ka leave-cap (att_daily_target) ke
+     * saath compare karke "over cap" flag bhi deta hai, aur har date ke
+     * liye agents ki poori list (naam, TL, LOB) bhi deta hai.
+     */
+    public function get_preference_overview($for_month)
+    {
+        $this->db->select('p.pref_date, p.pref_type, p.priority, p.remark, e.name, u.msd_id, e.lob, t.name as tl_name')
+                  ->from('att_wo_cl_preference p')
+                  ->join('att_employees e', 'e.emp_id = p.emp_id')
+                  ->join('master_users u', 'u.emp_id = p.emp_id')
+                  ->join('att_employees t', 't.emp_id = e.tl_emp_id', 'left')
+                  ->where('p.for_month', $for_month)
+                  ->order_by('p.pref_date', 'ASC');
+        $rows = $this->db->get()->result();
+
+        $by_date = array();
+        foreach($rows as $r)
+        {
+            if(!isset($by_date[$r->pref_date]))
+            {
+                $by_date[$r->pref_date] = array('WO' => array(), 'CL' => array());
+            }
+            $by_date[$r->pref_date][$r->pref_type][] = array(
+                'name' => $r->name, 'msd_id' => $r->msd_id, 'lob' => $r->lob,
+                'tl_name' => $r->tl_name, 'priority' => $r->priority, 'remark' => $r->remark
+            );
+        }
+
+        $result = array();
+        foreach($by_date as $date => $types)
+        {
+            $day_type = $this->get_day_type($date);
+            $this->db->where('day_type', $day_type);
+            $target = $this->db->get('att_daily_target')->row();
+
+            $wo_count = count($types['WO']);
+            $cl_count = count($types['CL']);
+            $cap = $target ? (int)$target->max_leave_count : null;
+
+            $result[] = array(
+                'date' => $date,
+                'day_type' => $day_type,
+                'wo_requested' => $wo_count,
+                'cl_requested' => $cl_count,
+                'total_requested' => $wo_count + $cl_count,
+                'max_leave_cap' => $cap,
+                'over_cap' => ($cap !== null) ? (($wo_count + $cl_count) > $cap) : FALSE,
+                'wo_agents' => $types['WO'],
+                'cl_agents' => $types['CL']
+            );
+        }
+
+        usort($result, function($a, $b){ return strcmp($a['date'], $b['date']); });
+        return $result;
     }
 
     private function resolve_roster_code($code)
