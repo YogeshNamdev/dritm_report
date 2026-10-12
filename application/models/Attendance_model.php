@@ -1507,7 +1507,7 @@ class Attendance_model extends CI_Model {
     // CORE STATUS COMPUTATION (Excel column V formula ka equivalent)
     // ------------------------------------------------------------------
 
-    const DEFAULT_LOGIN_TARGET_MINUTES = 420; // 7 hr — jo campaign list me nahi hai unke liye
+    const DEFAULT_LOGIN_TARGET_MINUTES = 415; // 7 hr — jo campaign list me nahi hai unke liye
 
     public function recompute_attendance_daily($emp_id, $date)
     {

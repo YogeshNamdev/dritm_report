@@ -88,6 +88,8 @@ $route['app/attendance/roster_compliance'] = 'app/attendance/roster_compliance';
 $route['app/attendance/my_roster'] = 'app/attendance/my_roster';
 $route['app/attendance/request_roster_change'] = 'app/attendance/request_roster_change';
 $route['app/attendance/roster_requests'] = 'app/attendance/roster_requests';
+$route['app/attendance/wo_cl_preference'] = 'app/attendance/wo_cl_preference';
+$route['app/attendance/preference_overview'] = 'app/attendance/preference_overview';
 $route['(:any)/(:any)'] = 'index/index/$1/$2';
 $route['(:any)'] = 'index/index/$1';
 

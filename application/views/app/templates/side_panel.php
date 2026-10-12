@@ -132,29 +132,52 @@
 
                 <?php endif; ?>
                 <!-- Sab role ke liye (agent + admin dono) -->
+
                 <li class="nav-item">
-                    <a href="<?= base_url(); ?>app/attendance/my_roster" class="nav-link">
-                        <i class="nav-icon fa fa-calendar"></i><p>My Roster</p>
+                    <a href="<?php echo base_url(); ?>app/Attendance/my_roster" class="nav-link sb-link">
+                        <span class="sb-link-icon"><i class="nav-icon fa fa-calendar"></i></span>
+                        <p>My Roster</p>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="<?= base_url(); ?>app/attendance/matrix" class="nav-link">
-                        <i class="nav-icon fa fa-check-square"></i><p>My Attendance</p>
+                    <a href="<?php echo base_url(); ?>app/Attendance/matrix" class="nav-link sb-link">
+                        <span class="sb-link-icon"><i class="nav-icon fa fa-check-square"></i></span>
+                        <p>My Attendance</p>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="<?= base_url(); ?>app/attendance/request_roster_change" class="nav-link">
-                        <i class="nav-icon fa fa-exchange-alt"></i><p>Request Roster Change</p>
+                    <a href="<?php echo base_url(); ?>app/Attendance/request_roster_change" class="nav-link sb-link">
+                        <span class="sb-link-icon"><i class="nav-icon fa fa-exchange-alt"></i></span>
+                        <p>Request Roster Change</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="<?php echo base_url(); ?>app/Attendance/wo_cl_preference" class="nav-link sb-link">
+                        <span class="sb-link-icon"><i class="nav-icon fa fa-clock"></i></span>
+                        <p>Work Order / CL Preference</p>
                     </a>
                 </li>
 
+                
+                
+
                 <!-- Sirf Admin (role_id == 1) -->
                 <?php if((int)$_SESSION["userdata"]["role_id"] == 1): ?>
+
                 <li class="nav-item">
-                    <a href="<?= base_url(); ?>app/attendance/roster_requests" class="nav-link">
-                        <i class="nav-icon fa fa-clipboard-check"></i><p>Roster Change Requests</p>
+                    <a href="<?php echo base_url(); ?>app/Attendance/roster_requests" class="nav-link sb-link">
+                        <span class="sb-link-icon"><i class="nav-icon fa fa-clipboard-check"></i></span>
+                        <p>Roster Change Requests</p>
                     </a>
                 </li>
+
+                <li class="nav-item">
+                    <a href="<?php echo base_url(); ?>app/Attendance/preference_overview" class="nav-link sb-link">
+                        <span class="sb-link-icon"><i class="nav-icon fa fa-clock"></i></span>
+                        <p>Preference Overview</p>
+                    </a>
+                </li>
+                
                 <?php endif; ?>
 
                 <?php if(in_array($_SESSION["userdata"]["role_id"], array(1, 2, 3, 4))): ?>

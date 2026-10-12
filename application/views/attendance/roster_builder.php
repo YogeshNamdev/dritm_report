@@ -18,7 +18,9 @@
     .rb-toolbar select, .rb-toolbar input[type=month] { min-width: 110px; }
 
     .rb-legend { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 14px; }
-    .rb-legend .chip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; padding: 3px 10px; border-radius: 20px; border: 1px solid transparent; }
+    .rb-legend .chip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; padding: 3px 10px; border-radius: 20px; border: 1px solid transparent; cursor: pointer; user-select: none; transition: box-shadow .12s ease, transform .08s ease; }
+    .rb-legend .chip:hover { box-shadow: 0 0 0 2px rgba(0,0,0,.06); }
+    .rb-legend .chip.active { box-shadow: 0 0 0 2px rgba(0,0,0,.28); font-weight: 700; }
     .rb-legend .chip.shift { background: var(--rb-shift-bg); color: var(--rb-shift-fg); border-color: var(--rb-shift-bd); }
     .rb-legend .chip.wo    { background: var(--rb-wo-bg);    color: var(--rb-wo-fg);    border-color: var(--rb-wo-bd); }
     .rb-legend .chip.cl    { background: var(--rb-cl-bg);    color: var(--rb-cl-fg);    border-color: var(--rb-cl-bd); }
@@ -42,9 +44,15 @@
     #roster_grid_table td.rb-weekend { background: var(--rb-weekend); }
     #roster_grid_table tbody tr:hover td.rb-weekend { background: #fdf3dc; }
 
+    #roster_grid_table tbody tr.rb-row-selected td { background: #fff3cd; }
+    #roster_grid_table tbody tr.rb-row-selected td.sticky-col { background: #ffe9a8; }
+    #roster_grid_table tbody tr.rb-row-selected td.rb-weekend { background: #ffe9a8; }
+
     .cell-select { width: 96px; font-size: 11px; padding: 3px 4px; border: 1px solid #d7dbe0; border-radius: 5px; background: #fff; color: #3a4453; cursor: pointer; transition: box-shadow .12s ease; }
     .cell-select:hover { box-shadow: 0 0 0 2px rgba(43,53,66,.08); }
     .cell-select:focus { outline: none; box-shadow: 0 0 0 2px rgba(11,94,168,.35); }
+    .cell-select.rb-cell-active, td.rb-cell-active-td { box-shadow: 0 0 0 2px #0b5ea8 inset; }
+    td.rb-cell-active-td { background: #eaf3ff !important; }
     .cell-select.type-SHIFT { background: var(--rb-shift-bg); color: var(--rb-shift-fg); border-color: var(--rb-shift-bd); }
     .cell-select.type-WO    { background: var(--rb-wo-bg);    color: var(--rb-wo-fg);    border-color: var(--rb-wo-bd); }
     .cell-select.type-CL    { background: var(--rb-cl-bg);    color: var(--rb-cl-fg);    border-color: var(--rb-cl-bd); }
@@ -119,6 +127,20 @@
                             <i class="fa fa-sync-alt"></i> Load
                         </button>
 
+                        <div class="form-group">
+                            <label>Specific Date</label>
+                            <input type="date" id="filter_specific_date" class="form-control form-control-sm" onchange="renderGrid();">
+                        </div>
+                        <div class="form-group">
+                            <label>Employee</label>
+                            <select class="form-control form-control-sm select2" id="filter_employee" style="width:190px;" onchange="renderGrid();">
+                                <option value="">All</option>
+                            </select>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-dark" onclick="clearViewFilters();" title="Specific Date / Employee / type-chip filters hata do">
+                            <i class="fa fa-times"></i> Clear View Filters
+                        </button>
+
                         <div class="ml-auto d-flex align-items-center" style="gap:8px;">
                             <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal" data-target="#presets_model">
                                 <i class="fa fa-clock"></i> Manage Shifts
@@ -135,11 +157,11 @@
 
                     <div class="d-flex justify-content-between align-items-center flex-wrap mb-2">
                         <div class="rb-legend">
-                            <span class="chip shift">Shift</span>
-                            <span class="chip wo">Week Off</span>
-                            <span class="chip cl">CL</span>
-                            <span class="chip hd">Half Day</span>
-                            <span class="chip lp">LP</span>
+                            <span class="chip shift" data-type="SHIFT" onclick="toggleTypeFilter('SHIFT', this);" title="Click: sirf Shift-waale employees dikhao">Shift</span>
+                            <span class="chip wo" data-type="WO" onclick="toggleTypeFilter('WO', this);" title="Click: sirf Week-Off-waale employees dikhao">Week Off</span>
+                            <span class="chip cl" data-type="CL" onclick="toggleTypeFilter('CL', this);" title="Click: sirf CL-waale employees dikhao">CL</span>
+                            <span class="chip hd" data-type="HD" onclick="toggleTypeFilter('HD', this);" title="Click: sirf Half-Day-waale employees dikhao">Half Day</span>
+                            <span class="chip lp" data-type="LP" onclick="toggleTypeFilter('LP', this);" title="Click: sirf LP-waale employees dikhao">LP</span>
                         </div>
                         <div>
                             <label class="mr-2 mb-0" style="font-weight:normal;font-size:13px;"><input type="checkbox" id="select_all_emp" onclick="toggleSelectAll(this);"> Select all</label>
@@ -259,6 +281,7 @@ var SHIFT_PRESETS = [];
 var DATE_COLUMNS = [];
 var GRID_ROWS = [];
 var DAY_ABBR = { 1:'Mon', 2:'Tue', 3:'Wed', 4:'Thu', 5:'Fri', 6:'Sat', 0:'Sun' };
+var ACTIVE_TYPE_FILTER = null; // 'SHIFT' | 'WO' | 'CL' | 'HD' | 'LP' | null (legend-chip click se set hota hai)
 
 // ------------------------------------------------------------------
 // SHIFT PRESETS
@@ -371,6 +394,7 @@ function get_roster_grid()
             }
             DATE_COLUMNS = data.date_columns;
             GRID_ROWS = data.all_record;
+            populateEmployeeFilter();
             renderGrid();
         },
         error: function(){
@@ -426,6 +450,78 @@ function cellOptionsHtml(dayData)
     return { html: html, type: currentType };
 }
 
+// ------------------------------------------------------------------
+// VIEW FILTERS (Specific Date / Employee / legend-type chips) — ye
+// sirf ye decide karte hain ki already-loaded GRID_ROWS/DATE_COLUMNS
+// me se kya dikhana hai. Koi naya AJAX nahi, koi data/logic change
+// nahi — sirf display-level filtering.
+// ------------------------------------------------------------------
+
+function getVisibleDateColumns()
+{
+    var specificDate = $("#filter_specific_date").val();
+    if(specificDate && DATE_COLUMNS.indexOf(specificDate) !== -1){
+        return [specificDate];
+    }
+    return DATE_COLUMNS;
+}
+
+function rowMatchesTypeFilter(r, visibleDates)
+{
+    if(!ACTIVE_TYPE_FILTER) return true;
+    for(var i = 0; i < visibleDates.length; i++){
+        var dayData = r.days[visibleDates[i]];
+        if(dayData && !dayData.left && dayData.roster_type === ACTIVE_TYPE_FILTER){
+            return true;
+        }
+    }
+    return false;
+}
+
+function getVisibleRows(visibleDates)
+{
+    var empFilter = $("#filter_employee").val();
+    return GRID_ROWS.filter(function(r){
+        if(empFilter && String(r.emp_id) !== String(empFilter)) return false;
+        if(!rowMatchesTypeFilter(r, visibleDates)) return false;
+        return true;
+    });
+}
+
+function populateEmployeeFilter()
+{
+    var prevVal = $("#filter_employee").val();
+    var html = "<option value=''>All</option>";
+    GRID_ROWS.forEach(function(r){
+        html += "<option value='"+r.emp_id+"'>"+r.name+" ("+r.msd_id+")</option>";
+    });
+    $("#filter_employee").html(html);
+    var stillExists = GRID_ROWS.some(function(r){ return String(r.emp_id) === String(prevVal); });
+    $("#filter_employee").val(stillExists ? prevVal : "").trigger("change");
+}
+
+function toggleTypeFilter(type, el)
+{
+    if(ACTIVE_TYPE_FILTER === type){
+        ACTIVE_TYPE_FILTER = null;
+        $(".rb-legend .chip").removeClass("active");
+    } else {
+        ACTIVE_TYPE_FILTER = type;
+        $(".rb-legend .chip").removeClass("active");
+        $(el).addClass("active");
+    }
+    renderGrid();
+}
+
+function clearViewFilters()
+{
+    $("#filter_specific_date").val("");
+    $("#filter_employee").val("").trigger("change");
+    ACTIVE_TYPE_FILTER = null;
+    $(".rb-legend .chip").removeClass("active");
+    renderGrid();
+}
+
 function renderGrid()
 {
     if(GRID_ROWS.length == 0){
@@ -433,30 +529,38 @@ function renderGrid()
         return;
     }
 
+    var visibleDates = getVisibleDateColumns();
+    var visibleRows = getVisibleRows(visibleDates);
+
+    if(visibleRows.length == 0){
+        $("#roster_grid_wrap").html("<div class='rb-empty-state'>Is Date / Employee / Type filter ke saath koi match nahi mila.<br><small>'Clear View Filters' se reset karo.</small></div>");
+        return;
+    }
+
     var txt = "<table id='roster_grid_table'><thead>";
 
     txt += "<tr class='rb-date-row'><th class='sticky-col' rowspan='2'>Employee</th><th rowspan='2'>Agent ID</th><th rowspan='2'>TL</th>";
-    DATE_COLUMNS.forEach(function(d){
+    visibleDates.forEach(function(d){
         var wknd = isWeekend(d);
         txt += "<th class='"+(wknd?'rb-weekend':'')+"'>"+d.substring(8,10)+"</th>";
     });
     txt += "</tr><tr class='rb-day-row'>";
-    DATE_COLUMNS.forEach(function(d){
+    visibleDates.forEach(function(d){
         var dow = new Date(d+"T00:00:00").getDay();
         var wknd = isWeekend(d);
         txt += "<th class='"+(wknd?'rb-weekend':'')+"'>"+DAY_ABBR[dow]+"</th>";
     });
     txt += "</tr></thead><tbody>";
 
-    for(var i = 0; i < GRID_ROWS.length; i++){
-        var r = GRID_ROWS[i];
+    for(var i = 0; i < visibleRows.length; i++){
+        var r = visibleRows[i];
         txt += "<tr>";
         txt += "<td class='sticky-col'><label class='mb-0' style='font-weight:normal;cursor:pointer;'>" +
-                    "<input type='checkbox' class='emp-check mr-1' value='"+r.emp_id+"' onchange='updateSelectedCount();'>"+r.name+"</label></td>";
+                    "<input type='checkbox' class='emp-check mr-1' value='"+r.emp_id+"' onchange='updateSelectedCount(); toggleRowHighlight(this);'>"+r.name+"</label></td>";
         txt += "<td>"+r.msd_id+"</td>";
         txt += "<td>"+(r.tl_name || '-')+"</td>";
 
-        DATE_COLUMNS.forEach(function(d){
+        visibleDates.forEach(function(d){
             var dayData = r.days[d];
             var wknd = isWeekend(d);
             if(dayData && dayData.left){
@@ -464,7 +568,7 @@ function renderGrid()
                 return;
             }
             var opt = cellOptionsHtml(dayData);
-            txt += "<td class='"+(wknd?'rb-weekend':'')+"'><select class='cell-select type-"+opt.type+"' data-emp='"+r.emp_id+"' data-date='"+d+"' onchange='cellChanged(this);'>"+opt.html+"</select></td>";
+            txt += "<td class='"+(wknd?'rb-weekend':'')+"'><select class='cell-select type-"+opt.type+"' data-emp='"+r.emp_id+"' data-date='"+d+"' onchange='cellChanged(this);' onfocus='cellFocused(this);' onblur='cellBlurred(this);' onkeydown='cellKeyNav(event, this);'>"+opt.html+"</select></td>";
         });
 
         txt += "</tr>";
@@ -525,6 +629,7 @@ function saveCellValue(emp_id, date, code, sel)
 function toggleSelectAll(cb)
 {
     $(".emp-check").prop("checked", cb.checked);
+    $(".emp-check").each(function(){ toggleRowHighlight(this); });
     updateSelectedCount();
 }
 
@@ -541,6 +646,59 @@ function getSelectedEmpIds()
     var ids = [];
     $(".emp-check:checked").each(function(){ ids.push($(this).val()); });
     return ids;
+}
+
+function toggleRowHighlight(cb)
+{
+    $(cb).closest("tr").toggleClass("rb-row-selected", cb.checked);
+}
+
+// ------------------------------------------------------------------
+// CELL FOCUS HIGHLIGHT + ARROW-KEY NAVIGATION (UI only, no logic change)
+// ------------------------------------------------------------------
+
+function cellFocused(sel)
+{
+    $(".cell-select.rb-cell-active").removeClass("rb-cell-active");
+    $("td.rb-cell-active-td").removeClass("rb-cell-active-td");
+    $(sel).addClass("rb-cell-active");
+    $(sel).closest("td").addClass("rb-cell-active-td");
+}
+
+function cellBlurred(sel)
+{
+    $(sel).removeClass("rb-cell-active");
+    $(sel).closest("td").removeClass("rb-cell-active-td");
+}
+
+function cellKeyNav(e, sel)
+{
+    var key = e.key;
+    if(key !== "ArrowUp" && key !== "ArrowDown" && key !== "ArrowLeft" && key !== "ArrowRight") return;
+
+    var $td = $(sel).closest("td");
+    var $tr = $td.closest("tr");
+    var colIndex = $td.index();
+    var $target = null;
+
+    if(key === "ArrowUp"){
+        var $prevTr = $tr.prev("tr");
+        if($prevTr.length){ $target = $prevTr.children().eq(colIndex).find(".cell-select"); }
+    } else if(key === "ArrowDown"){
+        var $nextTr = $tr.next("tr");
+        if($nextTr.length){ $target = $nextTr.children().eq(colIndex).find(".cell-select"); }
+    } else if(key === "ArrowLeft"){
+        var $prevTd = $td.prev("td");
+        if($prevTd.length){ $target = $prevTd.find(".cell-select"); }
+    } else if(key === "ArrowRight"){
+        var $nextTd = $td.next("td");
+        if($nextTd.length){ $target = $nextTd.find(".cell-select"); }
+    }
+
+    if($target && $target.length){
+        e.preventDefault();
+        $target.get(0).focus();
+    }
 }
 
 // ------------------------------------------------------------------
